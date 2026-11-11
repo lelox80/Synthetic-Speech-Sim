@@ -1,0 +1,12 @@
+{
+  "name": "synthetic-speech-sim",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Procedural vocal-fold speech and singing with an anatomical wireframe choir.",
+  "scripts": {
+    "build": "node scripts/build.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

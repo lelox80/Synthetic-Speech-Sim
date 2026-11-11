@@ -1,0 +1,10 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const read = name => fs.readFileSync(path.join(__dirname, name), 'utf8');
+const program = ['score.js', 'voice.js', 'choir.js', 'repertoire.js'].map(read).join('\n');
+vm.runInNewContext(program);
+const script = [program, ...['anatomy.js', 'cast.js', 'wireframe.js', 'app.js'].map(read)].join('\n');
+const html = read('shell.html').replace('/* STYLES */', () => ['instrument.css','observatory.css','cast.css'].map(read).join('\n')).replace('/* SCRIPTS */', () => script);
+new vm.Script(script);
+fs.writeFileSync(path.join(__dirname, '../outputs/VESPER-04-Wire-Choir.html'), html);

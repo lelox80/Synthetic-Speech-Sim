@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>VESPER 04 / The Wire Choir</title>
+<style>
+/* STYLES */
+</style>
+</head>
+<body>
+<div class="instrument">
+  <header class="masthead">
+    <div class="identity">
+      <div class="sigil" aria-hidden="true"><svg viewBox="0 0 42 42"><path d="M7 10h7l7 20 7-20h7M12 10l9 24 9-24M7 21h6m16 0h6"/></svg></div>
+      <div><h1>VESPER <span>04</span></h1><p>THE WIRE CHOIR</p></div>
+    </div>
+    <div class="status"><i></i><span id="status" role="status">STANDING BY</span></div>
+  </header>
+  <main class="layout">
+    <section class="performance" aria-label="Performance">
+      <div id="stage" class="stage">
+        <div class="reticle" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="graticule" aria-hidden="true"></div>
+        <div class="projector" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <canvas id="head" aria-label="Three-dimensional cast of wireframe singers with visible vocal anatomy in study views">Wireframe singing heads with interchangeable accessories.</canvas>
+        <svg class="anatomy-overlay" id="anatomyOverlay" aria-hidden="true"></svg>
+        <div id="singerLabels" class="singer-labels" role="group" aria-label="Mute or unmute singers"></div>
+        <div class="scanlines" aria-hidden="true"></div>
+        <div class="stage-id"><span id="fieldIndex">01</span> <b id="fieldName">PROJECTION FIELD</b></div>
+        <div class="stage-views" role="group" aria-label="Projection view">
+          <button type="button" id="ensembleView" aria-pressed="true">Ensemble</button>
+          <button type="button" id="cutaway" aria-pressed="false">Section</button>
+          <button type="button" id="larynxView" aria-pressed="false">Glottis</button>
+        </div>
+        <div class="field-caption" id="fieldCaption">Wireframe performance</div>
+        <div id="stageError" class="stage-error" hidden>3D projection is unavailable in this browser. The voice controls still work.</div>
+        <div class="lyric" id="lyric" aria-hidden="true"></div>
+        <div class="stage-footer">
+          <span id="dragHint">DRAG TO TURN</span>
+          <div class="stage-note"><span id="stagePitch">—</span><small>LEAD PITCH</small></div>
+          <div class="stage-tools">
+            <button id="expand" class="icon" type="button" aria-label="Fullscreen projection" title="Fullscreen projection"><svg viewBox="0 0 24 24"><path d="M8 4H4v4m12-4h4v4M4 16v4h4m12-4v4h-4"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="transport">
+        <button id="play" class="play" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M9 5v14l11-7z"/></svg><span id="playLabel">Sing</span></button>
+        <div class="timeline">
+          <div class="timehead"><span><b id="nowPlaying">Hollow Signal</b><small id="scoreMeta"></small></span><span id="clock">0:00 / 0:00</span></div>
+          <div class="score-timeline" id="scoreTimeline">
+            <canvas id="notation" aria-label="Timeline of singer notes"></canvas>
+            <input id="seek" type="range" min="0" max="1" step="0.01" value="0" aria-label="Playback position">
+          </div>
+        </div>
+        <button id="rewind" class="icon rewind" type="button" aria-label="Restart from beginning" title="Restart from beginning"><svg viewBox="0 0 24 24"><path d="M6 5v14m13-13L9 12l10 6z"/></svg></button>
+        <button id="exportAudio" class="icon export" type="button" aria-label="Export performance as WAV" title="Export performance as WAV"><svg viewBox="0 0 24 24"><path d="M12 4v11m-4-4 4 4 4-4M5 17v3h14v-3"/></svg></button>
+      </div>
+      <section class="choir module" aria-labelledby="choirTitle">
+        <div class="choir-heading"><h2 id="choirTitle">Choir</h2><p id="headCount" aria-live="polite">3 of 5 heads</p></div>
+        <label class="mode" for="choirMode"><span>Arrangement</span><select id="choirMode"><option value="harmony">Harmony</option><option value="unison">Unison</option><option value="round">Round</option></select></label>
+        <div class="choir-actions">
+          <button id="removeHead" class="icon" type="button" aria-label="Remove head" title="Remove head" disabled>−</button>
+          <button id="addHead" class="add-head" type="button">+ Add head</button>
+        </div>
+      </section>
+    </section>
+    <aside class="rack" aria-label="Observatory controls">
+      <section class="module desk">
+        <nav class="desk-nav" aria-label="Control panels">
+          <button type="button" id="repertoireTab" aria-controls="repertoirePanel" aria-pressed="false">Repertoire</button>
+          <button type="button" id="castTab" aria-controls="castPanel" aria-pressed="true">Cast</button>
+          <button type="button" id="voiceTab" aria-controls="voicePanel" aria-pressed="false">Voice</button>
+          <button type="button" id="anatomyTab" aria-controls="anatomyPanel" aria-pressed="false">Anatomy</button>
+        </nav>
+        <div class="desk-content" id="repertoirePanel" hidden>
+          <div class="module-title"><h2>Song library</h2><span id="songCount"></span></div>
+          <label class="library-filter"><span>Collection</span><select id="songFilter" aria-label="Filter songs by collection"><option value="all">All pieces</option><option>Original</option><option>Traditional</option><option>Classical</option><option>Rounds</option><option>Custom</option></select></label>
+          <div id="songs" class="songs"></div>
+          <button id="edit" type="button" class="text-button">Open score editor <span aria-hidden="true">↗</span></button>
+        </div>
+        <div class="desk-content" id="voicePanel" hidden>
+          <div class="module-title"><h2>Vocal synthesis</h2><button id="reset" class="text-button" type="button">Reset</button></div>
+          <div id="voicePresets" class="voice-presets" role="group" aria-label="Voice presets"><button type="button" data-preset="chamber">Chamber</button><button type="button" data-preset="cathedral">Cathedral</button><button type="button" data-preset="whisper">Breathy</button></div>
+          <div class="controls" id="controls"></div>
+          <p class="panel-note">These controls shape all singers. Each voice has its own vocal-tract size, pitch drift, and stereo position.</p>
+        </div>
+        <div class="desk-content" id="castPanel">
+          <div class="module-title"><h2>Wireframe cast</h2><span>05 PORTRAITS</span></div>
+          <div id="castRows" class="cast-rows"></div>
+          <label class="cast-overlay"><input id="showInternals" type="checkbox"> Bring vocal anatomy forward in Ensemble</label>
+        </div>
+        <div class="desk-content" id="anatomyPanel" hidden>
+          <div class="module-title"><h2>Vocal anatomy</h2><span>LEAD / 3D</span></div>
+          <div class="structures" id="structures" role="group" aria-label="Highlight an anatomical structure"></div>
+          <p id="structureDetail" class="panel-note">Select a structure to isolate it in the cutaway. The model follows the current phoneme while the choir sings.</p>
+        </div>
+      </section>
+      <section class="module monitor" aria-label="Glottal pulse monitor">
+        <div class="module-title"><h2>Glottal pulse</h2><span id="monitorHz">— Hz</span></div>
+        <div class="scope-window"><canvas id="pulse" aria-label="Top-down view of the lead singer's vocal folds and simulated airflow waveform"></canvas></div>
+        <div class="monitor-foot"><span id="monitorState">FOLDS AT REST</span><span id="monitorVowel">—</span></div>
+        <div class="formant-readout" id="formantReadout" aria-label="Lead vocal-tract resonance frequencies">F1 — &nbsp; F2 — &nbsp; F3 —</div>
+      </section>
+    </aside>
+  </main>
+  <footer class="foot"><span>VESPER 04 / THE WIRE CHOIR</span><span id="exportStatus" role="status"></span><span>OFFLINE INSTRUMENT <b>✦</b></span></footer>
+</div>
+<dialog id="editor" aria-labelledby="editorTitle">
+  <form id="scoreForm">
+    <div class="dialog-head"><div><p class="eyebrow">VESPER / SCORE</p><h2 id="editorTitle">Score editor</h2></div><button id="closeEditor" class="icon" type="button" aria-label="Close score editor">✕</button></div>
+    <p class="editor-help">Enter one <code>note beats sounds | lyric</code> per line. Use <code>-</code> for a rest. The lyric after <code>|</code> is optional and appears during playback.</p>
+    <div class="fields"><label>Song title<input id="scoreName" maxlength="48" required></label><label>Tempo (BPM)<input id="scoreTempo" type="number" min="40" max="210" required></label></div>
+    <label class="score-label" for="scoreText">Notes and phonemes</label>
+    <textarea id="scoreText" rows="10" spellcheck="false" required></textarea>
+    <details class="phonemes"><summary>Phoneme guide</summary><p>Join sounds with <code>+</code>. For example, <code>A3 1 h+eh+l | Hell</code> followed by <code>C4 2 l+oh | lo</code> sings “hello.”</p><p id="phonemeGuide"></p></details>
+    <p id="scoreError" role="alert" class="score-error" hidden></p>
+    <div class="dialog-footer"><div class="score-files"><button class="text-button" type="button" id="importScore">Import score</button><button class="text-button" type="button" id="downloadScore">Save score file</button><input type="file" id="scoreFile" accept=".vesper,.json,application/json" hidden></div><div class="score-files"><button class="text-button" type="button" id="cancelEditor">Cancel</button><button class="play" type="submit">Load score</button></div></div>
+  </form>
+</dialog>
+<script>
+'use strict';
+/* SCRIPTS */
+</script>
+</body>
+</html>

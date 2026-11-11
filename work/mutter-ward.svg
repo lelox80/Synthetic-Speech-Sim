@@ -1,0 +1,26 @@
+<svg class="ward-geometry" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+  <defs>
+    <linearGradient id="wardStroke" x1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="currentColor" stop-opacity=".14"/><stop offset=".5" stop-color="currentColor" stop-opacity=".47"/><stop offset="1" stop-color="currentColor" stop-opacity=".11"/>
+    </linearGradient>
+    <radialGradient id="wardGlass">
+      <stop stop-color="currentColor" stop-opacity=".01"/><stop offset=".81" stop-color="currentColor" stop-opacity=".025"/><stop offset="1" stop-color="currentColor" stop-opacity=".15"/>
+    </radialGradient>
+  </defs>
+  <g fill="none" stroke="currentColor">
+    <path opacity=".19" d="M20 196h166l60-44h118m616 44H814l-60-44H636M20 422h186l44 50h107m623-50H794l-44 50H643M334 36v102m332-102v102M334 470v94m332-94v94"/>
+    <path opacity=".1" stroke-dasharray="3 8" d="M0 300h1000M500 17v566M0 478h1000M0 128h1000"/>
+    <circle cx="500" cy="299" r="209" fill="url(#wardGlass)" stroke="url(#wardStroke)" stroke-width="1.5"/>
+    <circle cx="500" cy="299" r="220" stroke-opacity=".19"/>
+    <circle cx="500" cy="299" r="234" stroke-opacity=".15" stroke-dasharray="2 8" stroke-width="3"/>
+    <circle cx="500" cy="299" r="251" stroke-opacity=".11"/>
+    <path stroke-width="3" stroke-opacity=".36" d="M317 120a256 256 0 0 1 92-60m182 0a256 256 0 0 1 92 60M317 478a256 256 0 0 0 92 60m182 0a256 256 0 0 0 92-60"/>
+    <path opacity=".44" d="M500 72v20m0 414v20M273 299h20m414 0h20M330 140l12 12m316 0l12-12M330 458l12-12m316 0l12 12"/>
+    <path opacity=".24" d="M83 220h26v160H83m834-160h-26v160h26M113 272h20v54h-20m774-54h-20v54h20"/>
+  </g>
+  <g fill="currentColor" opacity=".57">
+    <circle cx="246" cy="152" r="2.5"/><circle cx="754" cy="152" r="2.5"/>
+    <circle cx="250" cy="472" r="2.5"/><circle cx="750" cy="472" r="2.5"/>
+    <path d="M206 298h8v3h-8zm580 0h8v3h-8zM497 44h6v6h-6zm0 504h6v6h-6z"/>
+  </g>
+</svg>

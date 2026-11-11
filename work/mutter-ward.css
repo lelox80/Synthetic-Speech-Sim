@@ -1,0 +1,56 @@
+body {
+  background: radial-gradient(ellipse at 25% 0%, #0e141e, #06080d 42%, #020306 88%);
+  --amber: #e58d67;
+}
+.instrument .stage {
+  --ward: #88a5cc;
+  --glow: #283a63;
+  background: radial-gradient(ellipse at 50% 46%, #070b16, #03050b 56%, #010205 88%);
+  border-color: #323c51;
+}
+[data-piece="mutter"] .stage[data-mood="pressure"] { --ward: #ab8297; --glow: #3e182d; }
+[data-piece="mutter"] .stage[data-mood="quiet"] { --ward: #7789ab; --glow: #1b2945; }
+[data-piece="mutter"] .stage[data-refrain] { --ward: #cd566b; --glow: #830c24; }
+.ward-geometry, .ward-bloom { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ward-geometry { color: var(--ward); opacity: .37; transition: color 850ms, opacity 750ms; }
+.stage[data-view="ensemble"] .ward-geometry { opacity: .26; }
+.ward-bloom {
+  background: radial-gradient(ellipse at 50% 48%, var(--glow) 0%, transparent 62%);
+  opacity: .085; transition: opacity 700ms ease, background 700ms;
+}
+[data-piece="mutter"] .stage[data-refrain] .ward-bloom { opacity: .59; }
+[data-piece="mutter"] .stage[data-mood="pressure"] .ward-bloom { opacity: .12; }
+[data-piece="mutter"] .stage[data-mood="quiet"] .ward-bloom { opacity: .045; }
+.stage:is([data-view="section"],[data-view="glottis"]) .ward-geometry { opacity: .17; }
+.graticule { opacity: .052; }
+.reticle i { border-color: var(--ward); }
+.projector i { border-color: var(--ward); opacity: .24; transition: border-color 800ms; }
+.structure { --anatomy: #ff5368 !important; }
+.anatomy-overlay g { --callout: #ff6578 !important; }
+[data-piece="mutter"] .stage .lyric {
+  --lyric-ink: #e9fbff;
+  --lyric-halo: #78deff99;
+  --lyric-bloom: #399ab98c;
+  bottom: 11%;
+  color: var(--lyric-ink);
+  text-shadow: 0 2px 4px #000, 0 0 9px var(--lyric-halo), 0 0 24px var(--lyric-bloom);
+}
+[data-piece="mutter"] .stage[data-mood="surge"] .lyric {
+  --lyric-ink: #fff0e8;
+  --lyric-halo: #ff816aa8;
+  --lyric-bloom: #ff4e5a8c;
+}
+[data-piece="mutter"] .stage[data-mood="pressure"] .lyric {
+  --lyric-ink: #fff3dd;
+  --lyric-halo: #ffc68b91;
+  --lyric-bloom: #f3875880;
+}
+[data-piece="mutter"] .stage[data-view="section"] .lyric,
+[data-piece="mutter"] .stage[data-view="glottis"] .lyric { bottom: 9%; }
+@media(max-width: 620px) {
+  [data-piece="mutter"] .stage .lyric { bottom: 17%; }
+  [data-piece="mutter"] .stage.has-choir .lyric { bottom: 15%; }
+}
+@media(prefers-reduced-motion: reduce) {
+  .ward-geometry, .ward-bloom, .projector i { transition: none; }
+}

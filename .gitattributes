@@ -1,0 +1,3 @@
+# Preserve the exact source-template and standalone-build bytes across platforms.
+* -text
+*.ogg binary
