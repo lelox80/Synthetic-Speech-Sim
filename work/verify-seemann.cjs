@@ -74,15 +74,29 @@ async function check() {
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
     await screenshot('seemann-open-water');
-    for (const time of [66,108,172,204,266]) {
-      await at(time);
+    for (const time of [66,108,172,266]) {
+      const pose=await at(time);
+      assert.deepEqual(pose.actor.hands,[1,1]);
+      assert.equal(pose.actor.headGrip,1);
       const glitch=await evaluate('({amount:seaFracture,state:stage.dataset.fracture,mesh:figures[0].fracture,ghosts:seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)})');
       assert.ok(glitch.amount>.8 && glitch.mesh>.8 && glitch.state==='rupture' && glitch.ghosts,JSON.stringify(glitch));
     }
     await at(108); await screenshot('seemann-rupture');
+    const returning=await at(116.1);
+    const lowering=await at(118);
+    assert.ok(returning.actor.cover>.98 && lowering.actor.cover>.40 && lowering.actor.cover<.80);
+    assert.ok(await evaluate('seaFracture===0'));
+    await screenshot('seemann-grip-lowering');
     await at(120.3);
-    assert.ok(await evaluate("seaFracture>.35 && seaFracture<.75 && stage.dataset.fracture==='unstable'"));
+    assert.ok(await evaluate("seaFracture===0 && stage.dataset.fracture==='clear'"));
     await sleep(550); await screenshot('seemann-partial-recovery');
+    for (const time of [21.2,80,91,120.6,150,182.6,204,219.4,250.2,259,280]) {
+      const quiet=await at(time);
+      assert.equal(quiet.actor.cover,0);
+      assert.equal(await evaluate('seaFracture'),0);
+      assert.ok(await evaluate('!seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)'));
+    }
+    console.log('Four instrumental grips, slow lowering, and clean quiet passages passed.');
     assert.ok((await at(51.9)).actor.reach>.45);
     await screenshot('seemann-hand');
     assert.equal((await at(120.3)).theme,'lantern');

@@ -2898,6 +2898,7 @@ uniform vec4 orbit;
 uniform vec2 orbitDepth;
 uniform float eyePass;
 uniform vec3 fracture;
+uniform float headGrip;
 out float depth;
 out float kind;
 out float path;
@@ -2942,8 +2943,16 @@ void main() {
     }
     float room = smoothstep(.68,1.32,display.y);
     float roll = shielding ? mix(-.24,.12,cover) : mix(-.38,.16,reach);
+    if (shielding && headGrip > .5) roll = mix(.14,-.10,cover);
     p.xy = vec2(p.x*cos(roll) - p.y*sin(roll),p.x*sin(roll) + p.y*cos(roll));
-    if (shielding) {
+    if (shielding && headGrip > .5) {
+      vec3 hand = p;
+      p = vec3(hand.z * 1.10,hand.y * 1.28,-hand.x * 1.08);
+      p.x += mix(.90,.56,cover) + arm * .70;
+      p.y += mix(-1.93,-.10,cover);
+      p.z += mix(.25,.15,cover);
+      p.x *= coverSide;
+    } else if (shielding) {
       p *= vec3(mix(1.10,1.17,room),1.43,1.04);
       p += vec3(mix(.54,.247,cover),mix(-1.63,-.595,cover),mix(.30,.793,cover));
       p.z -= cover * (.12 * smoothstep(-.13,.56,p.y) + .070 * abs(p.x));
@@ -2968,7 +2977,7 @@ void main() {
     p.z += min(p.z,0.) * .33 * smoothstep(-.62,.44,p.y);
     p.y += -.105 * face + .130 * jaw;
   }
-  if (fracture.x > .01) {
+  if (fracture.x > .01 && (material.x < 20. || material.x >= 22.)) {
     float tick = floor(fracture.y * 11.);
     float band = floor(p.y * 13.);
     float noise = fract(sin(band * 43.71 + tick * 17.37 + fracture.z * 9.1) * 43758.5453);
@@ -3019,6 +3028,7 @@ uniform float profileFit;
 uniform float eyePass;
 uniform vec2 eyeCover;
 uniform vec3 fracture;
+uniform float headGrip;
 uniform vec2 gaze;
 out vec4 color;
 float eyeWire(float distanceToLine, float scale) {
@@ -3235,7 +3245,8 @@ void main() {
   }
   float damagedRow = floor(gl_FragCoord.y / 13.);
   float dropout = fract(sin(damagedRow * 17.13 + floor(fracture.y * 9.) * 4.7) * 13758.17);
-  alpha *= 1. - fracture.x * .83 * step(.76,dropout);
+  float damage = kind >= 20. && kind < 22. ? 0. : fracture.x;
+  alpha *= 1. - damage * .83 * step(.76,dropout);
   alpha *= display.w;
   color = vec4(hue, alpha);
 }`;
@@ -3382,7 +3393,7 @@ function createProjection(canvas) {
   gl.clearColor(0, 0, 0, 0);
   gl.enable(gl.BLEND);
   gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-  const uniforms = Object.fromEntries(['rotation','seat','motion','display','tint','accent','actor','nose','foldGap','tongue','gaze','reach','cover','coverSide','foreheadGlow','fracture','orbit','orbitDepth','profileFit','eyePass','eyeCover','origin','study','selected'].map(key => [key, gl.getUniformLocation(program, key)]));
+  const uniforms = Object.fromEntries(['rotation','seat','motion','display','tint','accent','actor','nose','foldGap','tongue','gaze','reach','cover','coverSide','foreheadGlow','fracture','headGrip','orbit','orbitDepth','profileFit','eyePass','eyeCover','origin','study','selected'].map(key => [key, gl.getUniformLocation(program, key)]));
   let w = 0, h = 0, ratio = 1;
   function resize() {
     ratio = Math.min(Math.max(devicePixelRatio || 1, 1.32), 1.65);
@@ -3414,10 +3425,11 @@ function createProjection(canvas) {
       gl.uniform2f(uniforms.gaze, acting?.gaze[0] ?? 0, acting?.gaze[1] ?? 0);
       gl.uniform1f(uniforms.reach,acting?.reach ?? 0);
       gl.uniform1f(uniforms.cover,0);
-      gl.uniform2f(uniforms.eyeCover,acting?.hands[0] ?? 0,acting?.hands[1] ?? 0);
+      gl.uniform2f(uniforms.eyeCover,acting?.headGrip ? 0 : acting?.hands[0] ?? 0,acting?.headGrip ? 0 : acting?.hands[1] ?? 0);
       gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);
       gl.uniform3f(uniforms.fracture,mode || speechRun ? 0 : figure.fracture ?? 0,
         figure.fractureTime ?? 0,figure.model);
+      gl.uniform1f(uniforms.headGrip,acting?.headGrip ?? 0);
       gl.uniform1f(uniforms.profileFit, Number(mode !== 2));
       const orbit = exteriors[figure.model].orbit;
       gl.uniform4f(uniforms.orbit,orbit.eyeX,orbit.eyeWidth,orbit.lidHeight,orbit.tilt);
@@ -5330,14 +5342,11 @@ let seaLantern = 0;
 let seaFracture = 0;
 const seaSignalCanvas = $('seemannSignal');
 const seaSignalInk = seaSignalCanvas.getContext('2d');
-const seaFractureCues = [
-  [0,0], [58,.02], [61.635,.82], [65,1], [73.5,1],
-  [75.332,.62], [80,.51], [89,.60], [99.7,.72],
-  [102.7,1], [113.9,1], [115.994,.68], [120,.48],
-  [141,.55], [164,.66], [168.64,.82], [170.5,1], [176.3,1],
-  [178.057,.71], [182,.58], [198,.67], [203.1,1],
-  [205.022,.72], [209.5,.52], [230,.62], [246,.70],
-  [253,.78], [261,.91], [264.517,1], [268,1], [280,.82], [287.572,.72]
+const seaInstrumentals = [
+  {start:61.635024,hold:63.4,end:75.331696,clear:79.5},
+  {start:100.157,hold:102.2,end:115.993691,clear:120.5},
+  {start:168.640,hold:170.3,end:178.056736,clear:182.5},
+  {start:264.516978,hold:265.6,end:267.941146,clear:272.5}
 ];
 
 function syncSeemannCues() {
@@ -5359,7 +5368,7 @@ function syncSeemannCues() {
   figures.forEach(figure=>{figure.acting=null;figure.foreheadGlow=0;figure.fracture=0;});
 }
 
-function seemannAct(time,caption) {
+function seemannAct(time,caption,breakdown) {
   const still = reducedMotion.matches;
   const reachLine = seemannCaptions[6];
   const hand = reachLine.words.at(-1);
@@ -5369,10 +5378,17 @@ function seemannAct(time,caption) {
   const drift = caption?.style === 'drift' ? -.09 : caption?.style === 'undertow' ? .07 : 0;
   const tick = Math.floor(time*8);
   const twitch = still ? 0 : (moteSeed(tick,8)-.5)*seaFracture;
+  let grip = 0;
+  if (breakdown) {
+    const {start,hold,end,clear} = breakdown;
+    const raising = wardEase((time-start)/(hold-start));
+    const lowering = 1-wardEase((time-end)/(clear-end));
+    grip = still ? Number(time>=hold && time<end) : raising*lowering;
+  }
   return {yaw:(still?0:.018*Math.sin(time*.23))+drift+twitch*.52,
     nod:.035+alone*.04+(caption?.style === 'undertow'?.06:0)+twitch*.28,
     gaze:[(alone?0:drift*.8)+twitch*.68,alone?.03:-.10],
-    reach,cover:0,hands:[0,0],staring:alone>.5 || seaFracture>.75};
+    reach,cover:grip,hands:[grip,grip],headGrip:1,staring:alone>.5 || seaFracture>.75};
 }
 
 function paintSeemannSignal(time) {
@@ -5515,11 +5531,14 @@ function updateSeemann(time,dt,live,note,lyricTime) {
   }
   const sung = seemannCaptions[note?.line ?? -1];
   const caption = sung ?? seemannCaptions.findLast(line=>line.start<=time && time<line.end+.20);
-  const cue = Math.max(0,seaFractureCues.findLastIndex(([start])=>start<=time));
-  const [begin,from] = seaFractureCues[cue];
-  const [end,to] = seaFractureCues[cue+1] ?? seaFractureCues[cue];
-  const transition = wardEase((time-begin)/Math.max(.001,end-begin));
-  seaFracture = reducedMotion.matches ? 0 : mix(from,to,transition);
+  const breakdown = seaInstrumentals.find(({start,clear})=>time>=start && time<clear);
+  seaFracture = 0;
+  if (breakdown && !reducedMotion.matches) {
+    const {start,end} = breakdown;
+    const attack = wardEase((time-start)/1.15);
+    const recovery = 1-wardEase((time-end)/1.2);
+    seaFracture = time<end ? mix(.72,1,attack) : .20*recovery;
+  }
   stage.style.setProperty('--sea-fracture',seaFracture.toFixed(3));
   stage.dataset.fracture=seaFracture>.80?'rupture':seaFracture>.35?'unstable':'clear';
   setWardCaption(caption,sung?lyricTime:time);
@@ -5529,7 +5548,7 @@ function updateSeemann(time,dt,live,note,lyricTime) {
     figure.foreheadGlow=0;
     figure.fracture=seaFracture*(index===0?1:.78);
     figure.fractureTime=time;
-    figure.acting=index===0 ? seemannAct(time,caption) : null;
+    figure.acting=index===0 ? seemannAct(time,caption,breakdown) : null;
   });
 }
 

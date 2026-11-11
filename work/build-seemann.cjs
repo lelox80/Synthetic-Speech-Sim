@@ -16,13 +16,28 @@ function replace(from,to) {
 replace('<title>Mutter · Night Stage</title>','<title>Seemann · Synthetic Speech Sim</title>');
 replace('</style>',read('seemann-stage.css') + '\n</style>');
 replace('<div class="scanlines"', '<canvas id="seemannSignal" class="seemann-signal" aria-hidden="true"></canvas>\n        <div class="scanlines"');
-replace('uniform float eyePass;', 'uniform float eyePass;\nuniform vec3 fracture;');
-replace('uniform vec2 eyeCover;', 'uniform vec2 eyeCover;\nuniform vec3 fracture;');
-replace("'foreheadGlow','orbit'", "'foreheadGlow','fracture','orbit'");
+replace('uniform float eyePass;', 'uniform float eyePass;\nuniform vec3 fracture;\nuniform float headGrip;');
+replace('uniform vec2 eyeCover;', 'uniform vec2 eyeCover;\nuniform vec3 fracture;\nuniform float headGrip;');
+replace("'foreheadGlow','orbit'", "'foreheadGlow','fracture','headGrip','orbit'");
+replace('      gl.uniform2f(uniforms.eyeCover,acting?.hands[0] ?? 0,acting?.hands[1] ?? 0);',
+  '      gl.uniform2f(uniforms.eyeCover,acting?.headGrip ? 0 : acting?.hands[0] ?? 0,acting?.headGrip ? 0 : acting?.hands[1] ?? 0);');
 replace('      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);', `      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);
       gl.uniform3f(uniforms.fracture,mode || speechRun ? 0 : figure.fracture ?? 0,
-        figure.fractureTime ?? 0,figure.model);`);
-replace('  p -= origin;', `  if (fracture.x > .01) {
+        figure.fractureTime ?? 0,figure.model);
+      gl.uniform1f(uniforms.headGrip,acting?.headGrip ?? 0);`);
+replace('    p.xy = vec2(p.x*cos(roll) - p.y*sin(roll),p.x*sin(roll) + p.y*cos(roll));',
+  `    if (shielding && headGrip > .5) roll = mix(.14,-.10,cover);
+    p.xy = vec2(p.x*cos(roll) - p.y*sin(roll),p.x*sin(roll) + p.y*cos(roll));`);
+replace('    if (shielding) {\n      p *= vec3', `    if (shielding && headGrip > .5) {
+      vec3 hand = p;
+      p = vec3(hand.z * 1.10,hand.y * 1.28,-hand.x * 1.08);
+      p.x += mix(.90,.56,cover) + arm * .70;
+      p.y += mix(-1.93,-.10,cover);
+      p.z += mix(.25,.15,cover);
+      p.x *= coverSide;
+    } else if (shielding) {
+      p *= vec3`);
+replace('  p -= origin;', `  if (fracture.x > .01 && (material.x < 20. || material.x >= 22.)) {
     float tick = floor(fracture.y * 11.);
     float band = floor(p.y * 13.);
     float noise = fract(sin(band * 43.71 + tick * 17.37 + fracture.z * 9.1) * 43758.5453);
@@ -35,7 +50,8 @@ replace('  p -= origin;', `  if (fracture.x > .01) {
   p -= origin;`);
 replace('  alpha *= display.w;', `  float damagedRow = floor(gl_FragCoord.y / 13.);
   float dropout = fract(sin(damagedRow * 17.13 + floor(fracture.y * 9.) * 4.7) * 13758.17);
-  alpha *= 1. - fracture.x * .83 * step(.76,dropout);
+  float damage = kind >= 20. && kind < 22. ? 0. : fracture.x;
+  alpha *= 1. - damage * .83 * step(.76,dropout);
   alpha *= display.w;`);
 replace('  drawPulse(drift, figures[talk?.index ?? 0]);',
   '  paintSeemannSignal(t);\n  drawPulse(drift, figures[talk?.index ?? 0]);');
