@@ -5399,10 +5399,12 @@ function analyseSeemannAudio(buffer, lyricLines) {
     attacks[frame]=attack;
     while (vocal<vocals.length && time>vocals[vocal].end+.10) vocal++;
     const singing = vocal<vocals.length && time>=vocals[vocal].start-.10;
-    const damage = singing ? 0 : clamp(level*(.88+attack*.40)*pressure,0,1);
+    const measured = clamp(level*(.88+attack*.40)*pressure,0,1);
+    const damage = measured*(singing ? .5 : 1);
     fracture[frame]=damage<.06?0:damage;
 
-    if (damage>.58) overloadedUntil=time+.65;
+    // Singing releases the hands while the visual distortion keeps following the band.
+    if (damage>.58 && !singing) overloadedUntil=time+.65;
     if (!singing && time<=overloadedUntil) {
       grip = mix(grip,1,1-Math.exp(-step/.24));
       heldGrip=grip;

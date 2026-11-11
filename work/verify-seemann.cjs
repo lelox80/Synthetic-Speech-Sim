@@ -97,18 +97,23 @@ async function check() {
     const returning=await at(116.1);
     const lowering=await at(118);
     assert.ok(returning.actor.cover>.98 && lowering.actor.cover>.40 && lowering.actor.cover<.80);
-    assert.ok(await evaluate('seaFracture===0'));
+    assert.ok(await evaluate('seaFracture>.12 && seaFracture<.35'));
     await screenshot('seemann-grip-lowering');
     await at(120.3);
-    assert.ok(await evaluate("seaFracture===0 && stage.dataset.fracture==='clear'"));
+    assert.ok(await evaluate("seaFracture>.35 && seaFracture<=.5 && stage.dataset.fracture==='unstable'"));
     await sleep(550); await screenshot('seemann-partial-recovery');
-    for (const time of [21.2,80,91,120.6,150,182.6,204,219.4,250.2,259,280]) {
+    for (const time of [21.2,80,91,280]) {
       const quiet=await at(time);
       assert.equal(quiet.actor.cover,0);
       assert.equal(await evaluate('seaFracture'),0);
       assert.ok(await evaluate('!seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)'));
     }
-    console.log('Audio intensity peaks and dips, silence response, hand lowering, and quiet vocals passed.');
+    for (const time of [120.3,150,219.4,250.2,259]) {
+      const refrain=await at(time);
+      assert.equal(refrain.actor.cover,0);
+      assert.ok(await evaluate('seaFracture>.25 && seaFracture<=.5'));
+    }
+    console.log('Audio intensity, measured refrain glitches, silence response, hand lowering, and quiet passages passed.');
     assert.ok((await at(51.9)).actor.reach>.45);
     await screenshot('seemann-hand');
     assert.equal((await at(120.3)).theme,'lantern');
