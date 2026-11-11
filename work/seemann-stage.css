@@ -1,3 +1,27 @@
+.anatomy-windows { display: none; }
+.anatomy-window {
+  position: relative; min-width: 0; min-height: 0; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 7px; background: #010205;
+}
+.anatomy-window h2 {
+  position: absolute; top: 9px; left: 11px; margin: 0;
+  color: var(--muted); font: 600 12px system-ui,sans-serif;
+}
+.anatomy-window canvas {
+  position: absolute; top: 27px; left: 0; width: 100%; height: calc(100% - 27px);
+  pointer-events: none; opacity: .88;
+}
+@media (min-width: 901px) {
+  .layout {
+    grid-template-columns: minmax(0,1fr) clamp(240px,25vw,340px);
+    grid-template-areas: "stage anatomy" "transport monitor" "controls controls";
+  }
+  .anatomy-windows {
+    grid-area: anatomy; display: grid; grid-template-rows: minmax(0,1fr) minmax(0,1fr);
+    gap: 6px; height: var(--stage-height); min-width: 0;
+  }
+}
+
 [data-piece="seemann"] .stage {
   --ward: #708fae;
   --glow: #152840;

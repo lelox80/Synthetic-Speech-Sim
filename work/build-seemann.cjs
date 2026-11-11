@@ -15,6 +15,19 @@ function replace(from,to) {
 
 replace('<title>Mutter · Night Stage</title>','<title>Seemann · Synthetic Speech Sim</title>');
 replace('</style>',read('seemann-stage.css') + '\n</style>');
+replace('      <div class="transport">', `      <aside class="anatomy-windows" aria-label="Live vocal anatomy">
+        <section class="anatomy-window" aria-labelledby="sectionWindowTitle"><h2 id="sectionWindowTitle">Section</h2><canvas id="sectionWindow" aria-label="Live sagittal section of the singer"></canvas></section>
+        <section class="anatomy-window" aria-labelledby="glottisWindowTitle"><h2 id="glottisWindowTitle">Glottis</h2><canvas id="glottisWindow" aria-label="Live vocal folds viewed from above, front at the top"></canvas></section>
+      </aside>
+      <div class="transport">`);
+replace("caption: 'Superior view · front below', yaw: .14, pitch: 1.31",
+  "caption: 'Superior view · front above', yaw: 0, pitch: Math.PI / 2");
+replace('  world = p;', `  p.xy = vec2(p.x*cos(rotation.z)-p.y*sin(rotation.z),p.x*sin(rotation.z)+p.y*cos(rotation.z));
+  world = p;`);
+replace('pitch + (acting?.nod ?? 0), 0, 0);',
+  'pitch + (acting?.nod ?? 0), mode === 2 ? Math.PI : 0, 0);');
+replace('  [y,z] = [Math.cos(pitch) * y - Math.sin(pitch) * z, Math.sin(pitch) * y + Math.cos(pitch) * z];',
+  '  [y,z] = [Math.cos(pitch) * y - Math.sin(pitch) * z, Math.sin(pitch) * y + Math.cos(pitch) * z];\n  if (mode === 2) [x,y] = [-x,-y];');
 replace('      node.textContent = word;', `      node.textContent = word;
       node.dataset.echo = word;
       node.style.setProperty('--word-index',index);`);
@@ -81,7 +94,7 @@ replace('  alpha *= display.w;', `  float damagedRow = floor(gl_FragCoord.y / 13
   }
   alpha *= display.w;`);
 replace('  drawPulse(drift, figures[talk?.index ?? 0]);',
-  '  paintSeemannSignal(t);\n  drawPulse(drift, figures[talk?.index ?? 0]);');
+  '  drawAnatomyWindows(drift, figures[talk?.index ?? spotlight ?? 0]);\n  paintSeemannSignal(t);\n  drawPulse(drift, figures[talk?.index ?? 0]);');
 replace('<script>\n',`<script id="seemannBackingData" type="application/octet-stream">${backing}</script>\n<script>\n`);
 replace('const $ = id => document.getElementById(id);',`const seemannTake = ${JSON.stringify(take)};
 const seemannSong = {

@@ -753,6 +753,30 @@ body {
   #wardCue { grid-column: 1 / -1; grid-row: 2; max-width: 100%; justify-self: start; }
 }
 
+.anatomy-windows { display: none; }
+.anatomy-window {
+  position: relative; min-width: 0; min-height: 0; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 7px; background: #010205;
+}
+.anatomy-window h2 {
+  position: absolute; top: 9px; left: 11px; margin: 0;
+  color: var(--muted); font: 600 12px system-ui,sans-serif;
+}
+.anatomy-window canvas {
+  position: absolute; top: 27px; left: 0; width: 100%; height: calc(100% - 27px);
+  pointer-events: none; opacity: .88;
+}
+@media (min-width: 901px) {
+  .layout {
+    grid-template-columns: minmax(0,1fr) clamp(240px,25vw,340px);
+    grid-template-areas: "stage anatomy" "transport monitor" "controls controls";
+  }
+  .anatomy-windows {
+    grid-area: anatomy; display: grid; grid-template-rows: minmax(0,1fr) minmax(0,1fr);
+    gap: 6px; height: var(--stage-height); min-width: 0;
+  }
+}
+
 [data-piece="seemann"] .stage {
   --ward: #708fae;
   --glow: #152840;
@@ -1031,6 +1055,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <div class="lyric" id="lyric" aria-hidden="true"></div>
         <div class="stage-footer"><span id="dragHint"></span></div>
       </div>
+      <aside class="anatomy-windows" aria-label="Live vocal anatomy">
+        <section class="anatomy-window" aria-labelledby="sectionWindowTitle"><h2 id="sectionWindowTitle">Section</h2><canvas id="sectionWindow" aria-label="Live sagittal section of the singer"></canvas></section>
+        <section class="anatomy-window" aria-labelledby="glottisWindowTitle"><h2 id="glottisWindowTitle">Glottis</h2><canvas id="glottisWindow" aria-label="Live vocal folds viewed from above, front at the top"></canvas></section>
+      </aside>
       <div class="transport">
         <button id="play" class="play" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M9 5v14l11-7z"/></svg><span id="playLabel">Sing</span></button>
         <div class="timeline">
@@ -3111,6 +3139,7 @@ void main() {
   p = vec3(cy * p.x + sy * p.z, p.y, -sy * p.x + cy * p.z);
   float cp = cos(rotation.y), sp = sin(rotation.y);
   p = vec3(p.x, cp * p.y - sp * p.z, sp * p.y + cp * p.z);
+  p.xy = vec2(p.x*cos(rotation.z)-p.y*sin(rotation.z),p.x*sin(rotation.z)+p.y*cos(rotation.z));
   world = p;
   float perspective = 4.7 / (4.7 - p.z);
   float scale = .535 * seat.z * perspective;
@@ -3476,6 +3505,7 @@ function studyPoint(point, mode, yaw, pitch, width, height, zoom = 1, count = 1,
   let [x,y,z] = point.map((value,index) => value - origin[index]);
   [x,z] = [Math.cos(yaw) * x + Math.sin(yaw) * z, -Math.sin(yaw) * x + Math.cos(yaw) * z];
   [y,z] = [Math.cos(pitch) * y - Math.sin(pitch) * z, Math.sin(pitch) * y + Math.cos(pitch) * z];
+  if (mode === 2) [x,y] = [-x,-y];
   const [sx,sy,scale] = seats[index].map(value => value * zoom);
   const factor = .535 * scale * 4.7 / (4.7 - z);
   return [width * (1 + sx + x / aspect * factor) / 2,height * (1 - sy - (y + .18) * factor) / 2];
@@ -3552,7 +3582,7 @@ function createProjection(canvas) {
       const blink = time ? Math.exp(-(((blinkTime - 4.1) / .093) ** 2)) : 0;
       gl.uniform4f(uniforms.display, time, w / h, ratio, figure.muted && !mode ? .43 : 1);
       const acting = mode ? null : figure.acting;
-      gl.uniform4f(uniforms.rotation, yaw + spread + (acting?.yaw ?? 0), pitch + (acting?.nod ?? 0), 0, 0);
+      gl.uniform4f(uniforms.rotation, yaw + spread + (acting?.yaw ?? 0), pitch + (acting?.nod ?? 0), mode === 2 ? Math.PI : 0, 0);
       gl.uniform2f(uniforms.gaze, acting?.gaze[0] ?? 0, acting?.gaze[1] ?? 0);
       gl.uniform1f(uniforms.reach,acting?.reach ?? 0);
       gl.uniform1f(uniforms.cover,0);
@@ -4190,7 +4220,7 @@ const stage = $('stage');
 const views = [
   { id: 'ensembleView', name: 'ensemble', title: 'PROJECTION FIELD', caption: 'Select a singer’s label to mute them', yaw: .33, pitch: -.025 },
   { id: 'cutaway', name: 'section', title: 'SAGITTAL SECTION', caption: 'Lead singer · near side cut away', yaw: 1.21, pitch: -.07 },
-  { id: 'larynxView', name: 'glottis', title: 'LARYNGEAL STUDY', caption: 'Superior view · front below', yaw: .14, pitch: 1.31 }
+  { id: 'larynxView', name: 'glottis', title: 'LARYNGEAL STUDY', caption: 'Superior view · front above', yaw: 0, pitch: Math.PI / 2 }
 ];
 const overlay = $('anatomyOverlay');
 const svg = tag => document.createElementNS('http://www.w3.org/2000/svg',tag);
@@ -4582,6 +4612,7 @@ function frame(ms) {
   if (!speechRun) updateWard(t, dt, live, lyricNote, lyricTime);
   if (projection) projection(drift, yaw + (mode ? 0 : .055 * Math.sin(drift * .77)), pitch + (mode ? 0 : .018 * Math.sin(drift * 1.3)), figures, mode, mask, spotlight, projectionZoom);
   const hz = figures[talk?.index ?? 0].hz;
+  drawAnatomyWindows(drift, figures[talk?.index ?? spotlight ?? 0]);
   paintSeemannSignal(t);
   drawPulse(drift, figures[talk?.index ?? 0]);
   setText($('monitorHz'), hz ? `${hz} Hz` : '— Hz');
@@ -5578,6 +5609,38 @@ let seaLantern = 0;
 let seaFracture = 0;
 const seaSignalCanvas = $('seemannSignal');
 const seaSignalInk = seaSignalCanvas.getContext('2d');
+
+const anatomyWindows = ['sectionWindow','glottisWindow'].map((id,index)=>{
+  const canvas = $(id);
+  const view = {canvas,mode:index+1,draw:null,failed:false};
+  canvas.addEventListener('webglcontextlost',event=>{
+    event.preventDefault();
+    view.draw?.dispose();
+    view.draw=null;
+    view.failed=true;
+  });
+  canvas.addEventListener('webglcontextrestored',()=>{view.failed=false;});
+  return view;
+});
+
+function drawAnatomyWindows(time,figure) {
+  if (!projection || !figure || !matchMedia('(min-width: 901px)').matches
+    || document.fullscreenElement === stage || stage.classList.contains('expanded')) return;
+  // Copies share the singer's current articulation without changing the main head's light or pose.
+  const anatomy = {...figure,accessories:false,internals:true,brainLight:0,brainScreen:null,fracture:0,acting:null};
+  for (const view of anatomyWindows) {
+    if (view.failed) continue;
+    try {
+      view.draw ??= createProjection(view.canvas);
+      const angle = views[view.mode];
+      view.draw(time,angle.yaw,angle.pitch,[anatomy],view.mode,0,null,view.mode===2?1.35:1);
+    } catch (error) {
+      view.failed=true;
+      view.canvas.hidden=true;
+      console.warn('Anatomy window unavailable:',error);
+    }
+  }
+}
 
 function syncSeemannCues() {
   const sections = score() === seemannSong ? seemannTake.sections : fullTake.sections;

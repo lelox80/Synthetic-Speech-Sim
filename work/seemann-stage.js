@@ -7,6 +7,38 @@ let seaFracture = 0;
 const seaSignalCanvas = $('seemannSignal');
 const seaSignalInk = seaSignalCanvas.getContext('2d');
 
+const anatomyWindows = ['sectionWindow','glottisWindow'].map((id,index)=>{
+  const canvas = $(id);
+  const view = {canvas,mode:index+1,draw:null,failed:false};
+  canvas.addEventListener('webglcontextlost',event=>{
+    event.preventDefault();
+    view.draw?.dispose();
+    view.draw=null;
+    view.failed=true;
+  });
+  canvas.addEventListener('webglcontextrestored',()=>{view.failed=false;});
+  return view;
+});
+
+function drawAnatomyWindows(time,figure) {
+  if (!projection || !figure || !matchMedia('(min-width: 901px)').matches
+    || document.fullscreenElement === stage || stage.classList.contains('expanded')) return;
+  // Copies share the singer's current articulation without changing the main head's light or pose.
+  const anatomy = {...figure,accessories:false,internals:true,brainLight:0,brainScreen:null,fracture:0,acting:null};
+  for (const view of anatomyWindows) {
+    if (view.failed) continue;
+    try {
+      view.draw ??= createProjection(view.canvas);
+      const angle = views[view.mode];
+      view.draw(time,angle.yaw,angle.pitch,[anatomy],view.mode,0,null,view.mode===2?1.35:1);
+    } catch (error) {
+      view.failed=true;
+      view.canvas.hidden=true;
+      console.warn('Anatomy window unavailable:',error);
+    }
+  }
+}
+
 function syncSeemannCues() {
   const sections = score() === seemannSong ? seemannTake.sections : fullTake.sections;
   wardCue.replaceChildren(...sections.map(([time,name],index)=>new Option(timeText(time)+' · '+name,index)));
