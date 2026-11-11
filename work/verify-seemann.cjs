@@ -81,6 +81,18 @@ async function check() {
         readable:wordNodes.every(node=>getComputedStyle(node).filter==='none'),
         size:parseFloat(style.fontSize),glitch:Number(style.getPropertyValue('--text-glitch'))};
     })()`);
+    const stageBrightness=()=>evaluate(`(() => {
+      const w=wardStageCanvas.width,h=wardStageCanvas.height;
+      const region=(left,top,right,bottom)=>{
+        const x=Math.floor(w*left),y=Math.floor(h*top);
+        const width=Math.max(1,Math.floor(w*(right-left))),height=Math.max(1,Math.floor(h*(bottom-top)));
+        const pixels=stageInk.getImageData(x,y,width,height).data;
+        let energy=0;
+        for(let i=0;i<pixels.length;i+=4) energy+=(pixels[i]*.2126+pixels[i+1]*.7152+pixels[i+2]*.0722)*pixels[i+3]/255;
+        return energy/(width*height);
+      };
+      return {water:region(0,.66,1,.98),lamp:region(.74,.20,.87,.45)};
+    })()`);
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
     await screenshot('seemann-open-water');
@@ -95,14 +107,22 @@ async function check() {
     assert.ok(await evaluate('seaFracture>.1 && seaFracture<.6'));
     await at(266);
     assert.ok(await evaluate('seaFracture<.15'));
+    await at(108);await sleep(500);
+    const loudStage=await stageBrightness();
+    assert.ok(await evaluate('seemannMusicAt(108).intensity>.9'));
     // Removing the measured audio energy must remove the effect at the same song time.
     await evaluate(`window.qaSavedSeaEnergy=seaAudioEnergy;
       const silent=new OfflineAudioContext(1,1,8000).createBuffer(1,8000*120,8000);
       seaAudioEnergy=analyseSeemannAudio(silent,seemannTake.words);`);
     await at(108);
     assert.equal(await evaluate('seaFracture'),0);
+    await sleep(650);
+    const quietStage=await stageBrightness();
+    assert.ok(loudStage.water>quietStage.water*1.2 && loudStage.lamp>quietStage.lamp*1.6,JSON.stringify({loudStage,quietStage}));
+    console.log('Music-reactive waves and lantern',JSON.stringify({loudStage,quietStage}));
     await evaluate('seaAudioEnergy=qaSavedSeaEnergy;delete window.qaSavedSeaEnergy;');
     await at(108); await screenshot('seemann-rupture');
+    await sleep(350); await screenshot('seemann-music-water-peak');
     const returning=await at(116.1);
     const lowering=await at(118);
     assert.ok(returning.actor.cover>.98 && lowering.actor.cover>.40 && lowering.actor.cover<.80);
@@ -110,6 +130,7 @@ async function check() {
     await screenshot('seemann-grip-lowering');
     await at(120.3);
     assert.ok(await evaluate("seaFracture>.35 && seaFracture<=.5 && stage.dataset.fracture==='unstable'"));
+    assert.ok(await evaluate('seemannMusicAt(120.3).intensity>.9'));
     await sleep(550); await screenshot('seemann-partial-recovery');
     for (const time of [21.2,80,91,280]) {
       const quiet=await at(time);

@@ -10,6 +10,8 @@ The score uses both vocal tracks and lyric timings from the supplied MIDI. Five 
 
 Seemann's lyrics are centered across desktop and mobile layouts. Word highlights and progress strokes follow the singing, with water reflections, clipped colour glitches, and lighting treatments for the lantern, rain, storm, ember, and cold passages. The main letters stay sharp while the decorative layers respond to music intensity. Reduced motion keeps the timed highlights and removes moving echoes.
 
+The water's swell height, ripples, and brightness follow measured backing intensity. Strong peaks widen and brighten the lantern glow, beam, and reflections, including during the refrains. The light rises quickly and settles gradually as the music softens.
+
 Under **Controls → Speak**, enter text, choose a singer, and select **Simulated English** or **Simulated German**. Speaking speed ranges from **0.5× to 2×** and applies when you press **Speak**. Locally installed system voices are also available as separate choices. The simulated voices have a stylized sound and approximate pronunciation.
 
 ## Run

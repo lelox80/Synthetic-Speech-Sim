@@ -43,6 +43,7 @@ function analyseSeemannAudio(buffer, lyricLines) {
     else vocals.push({start,end});
   }
 
+  const intensity = new Float32Array(count);
   const attacks = new Float32Array(count);
   const fracture = new Float32Array(count);
   const hands = new Float32Array(count);
@@ -56,6 +57,7 @@ function analyseSeemannAudio(buffer, lyricLines) {
     const level = wardEase((fast-floor)/span);
     const attack = clamp((fast-slow)/span,0,1);
     const pressure = wardEase((slow-floor*.85)/Math.max(.0001,span*.65));
+    intensity[frame]=level*pressure;
     attacks[frame]=attack;
     while (vocal<vocals.length && time>vocals[vocal].end+.10) vocal++;
     const singing = vocal<vocals.length && time>=vocals[vocal].start-.10;
@@ -72,16 +74,17 @@ function analyseSeemannAudio(buffer, lyricLines) {
     } else grip=heldGrip*(1-wardEase((time-releasedAt)/4.2));
     hands[frame]=grip<.005?0:grip;
   }
-  return {step,duration:buffer.duration,attacks,fracture,hands};
+  return {step,duration:buffer.duration,intensity,attacks,fracture,hands};
 }
 
 function seemannMusicAt(time) {
   const data = seaAudioEnergy;
-  if (!data || time<0 || time>=data.duration) return {attack:0,fracture:0,grip:0};
+  if (!data || time<0 || time>=data.duration) return {intensity:0,attack:0,fracture:0,grip:0};
   const position = time/data.step;
   const first = Math.floor(position), last = Math.min(first+1,data.fracture.length-1);
   const fraction = position-first;
   return {
+    intensity:mix(data.intensity[first],data.intensity[last],fraction),
     attack:mix(data.attacks[first],data.attacks[last],fraction),
     fracture:mix(data.fracture[first],data.fracture[last],fraction),
     grip:mix(data.hands[first],data.hands[last],fraction)
