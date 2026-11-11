@@ -72,6 +72,15 @@ async function check() {
       await frame();
       return evaluate('({time:position(),caption:wardLyric.textContent,theme:stage.dataset.lighting,actor:figures[0].acting,piece:document.body.dataset.piece})');
     };
+    const captionBounds=()=>evaluate(`(() => {
+      const field=stage.getBoundingClientRect(), text=wardLyric.getBoundingClientRect();
+      const style=getComputedStyle(wardLyric);
+      return {error:Math.abs((text.left+text.right-field.left-field.right)/2),
+        within:text.left>=field.left && text.right<=field.right,
+        words:wordNodes.every(node=>node.dataset.echo===node.textContent),
+        readable:wordNodes.every(node=>getComputedStyle(node).filter==='none'),
+        size:parseFloat(style.fontSize),glitch:Number(style.getPropertyValue('--text-glitch'))};
+    })()`);
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
     await screenshot('seemann-open-water');
@@ -117,6 +126,8 @@ async function check() {
     assert.ok((await at(51.9)).actor.reach>.45);
     await screenshot('seemann-hand');
     assert.equal((await at(120.3)).theme,'lantern');
+    const desktopCaption=await captionBounds();
+    assert.ok(desktopCaption.error<1 && desktopCaption.within && desktopCaption.words && desktopCaption.readable && desktopCaption.glitch>0,JSON.stringify(desktopCaption));
     await screenshot('seemann-lantern');
     assert.equal((await at(219.4)).theme,'ember');
     await screenshot('seemann-ember');
@@ -166,13 +177,20 @@ async function check() {
     await evaluate("$('speechStop').click()");
     await size(390,844,true); await at(120.3);
     assert.equal(await evaluate('document.documentElement.scrollWidth'),390);
+    for (const line of await evaluate('seemannCaptions.map(line=>line.start+.2)')) {
+      await at(line);
+      const caption=await captionBounds();
+      assert.ok(caption.error<1 && caption.within && caption.readable && caption.size>=17,JSON.stringify(caption));
+    }
+    await at(120.3);
     await screenshot('seemann-mobile');
     await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
     await at(120.3);
     assert.equal(await evaluate('seaFracture'),0);
+    assert.equal((await captionBounds()).glitch,0);
     assert.ok(await evaluate('figures.every(figure=>figure.fracture===0)'));
     assert.deepEqual(errors,[]);
-    console.log('Speech, song switching, reduced motion, and mobile checks passed.');
+    console.log('Speech, song switching, readable centered lyrics, reduced motion, and mobile checks passed.');
   } finally { ws.close(); }
 }
 check().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>chrome.kill());

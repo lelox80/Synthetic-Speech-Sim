@@ -43,6 +43,36 @@ function seemannAct(time,caption,music) {
     reach,cover:grip,hands:[grip,grip],headGrip:1,staring:alone>.5 || seaFracture>.75};
 }
 
+function animateSeemannLyrics(caption,time,music) {
+  if (!caption) return;
+  const reduced = reducedMotion.matches;
+  const age = time-caption.start;
+  const entrance = wardEase((age+.14)/.42);
+  const exit = 1-wardEase((time-caption.end)/.65);
+  const tick = Math.floor(time*10);
+  const pulse = clamp(seaFracture*.85+music.attack*.32,0,1);
+  const burst = moteSeed(tick,12)>.65 ? 1 : .20;
+  const glitch = reduced || caption.style==='still' ? 0 : Math.min(.72,pulse*burst);
+  const shift = (moteSeed(tick,13)-.5)*12*glitch;
+  const slice = 12+Math.floor(moteSeed(tick,14)*57);
+  wardLyric.style.setProperty('--line-presence',((.80+.20*entrance)*exit).toFixed(3));
+  wardLyric.style.setProperty('--line-progress',clamp(age/(caption.end-caption.start),0,1).toFixed(3));
+  wardLyric.style.setProperty('--text-glitch',glitch.toFixed(3));
+  wardLyric.style.setProperty('--text-shift',shift.toFixed(2)+'px');
+  wardLyric.style.setProperty('--slice-top',slice+'%');
+  wardLyric.style.setProperty('--slice-bottom',(86-slice)+'%');
+  wardLyric.style.setProperty('--lyric-energy',reduced?'0':pulse.toFixed(3));
+  wordNodes.forEach((node,index)=>{
+    const [,start,end] = caption.words[index];
+    const progress = clamp((time-start)/Math.max(.05,end-start),0,1);
+    const current = index===wardWord;
+    const hit = reduced ? 0 : Math.exp(-Math.max(0,time-start)*5.5)*Number(current);
+    node.dataset.delivery=current?'current':time>=end?'sung':'waiting';
+    node.style.setProperty('--word-fill',(100*progress).toFixed(1)+'%');
+    node.style.setProperty('--word-hit',hit.toFixed(3));
+  });
+}
+
 function paintSeemannSignal(time) {
   if (!seaSignalInk) return;
   const ratio = Math.min(devicePixelRatio || 1,1.2);
@@ -182,12 +212,13 @@ function updateSeemann(time,dt,live,note,lyricTime) {
     stage.removeAttribute('data-refrain');
   }
   const sung = seemannCaptions[note?.line ?? -1];
-  const caption = sung ?? seemannCaptions.findLast(line=>line.start<=time && time<line.end+.20);
+  const caption = sung ?? seemannCaptions.findLast(line=>line.start-.14<=time && time<line.end+.65);
   const music = seemannMusicAt(time);
   seaFracture = reducedMotion.matches ? 0 : music.fracture;
   stage.style.setProperty('--sea-fracture',seaFracture.toFixed(3));
   stage.dataset.fracture=seaFracture>.80?'rupture':seaFracture>.35?'unstable':'clear';
   setWardCaption(caption,sung?lyricTime:time);
+  animateSeemannLyrics(caption,sung?lyricTime:time,music);
   stage.dataset.lighting=caption?.style ?? seemannTake.sections[index][3];
   paintSeemann(time,dt,live,caption);
   figures.forEach((figure,index)=>{

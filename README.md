@@ -8,6 +8,8 @@ The current version includes blue wireframe heads, visible red internals, round 
 
 The score uses both vocal tracks and lyric timings from the supplied MIDI. Five isolated octave outliers are corrected, and the verses are lowered by an octave for Morrow's baritone register. The final word carries across two MIDI notes to preserve the four “kalt” repetitions in the supplied text. The backing is rendered from the instrumental MIDI tracks.
 
+Seemann's lyrics are centered across desktop and mobile layouts. Word highlights and progress strokes follow the singing, with water reflections, clipped colour glitches, and lighting treatments for the lantern, rain, storm, ember, and cold passages. The main letters stay sharp while the decorative layers respond to music intensity. Reduced motion keeps the timed highlights and removes moving echoes.
+
 Under **Controls → Speak**, enter text, choose a singer, and select **Simulated English** or **Simulated German**. Speaking speed ranges from **0.5× to 2×** and applies when you press **Speak**. Locally installed system voices are also available as separate choices. The simulated voices have a stylized sound and approximate pronunciation.
 
 ## Run

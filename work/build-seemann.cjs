@@ -15,6 +15,9 @@ function replace(from,to) {
 
 replace('<title>Mutter · Night Stage</title>','<title>Seemann · Synthetic Speech Sim</title>');
 replace('</style>',read('seemann-stage.css') + '\n</style>');
+replace('      node.textContent = word;', `      node.textContent = word;
+      node.dataset.echo = word;
+      node.style.setProperty('--word-index',index);`);
 replace('<div class="scanlines"', '<canvas id="seemannSignal" class="seemann-signal" aria-hidden="true"></canvas>\n        <div class="scanlines"');
 replace('uniform float eyePass;', 'uniform float eyePass;\nuniform vec3 fracture;\nuniform float headGrip;');
 replace('uniform vec2 eyeCover;', 'uniform vec2 eyeCover;\nuniform vec3 fracture;\nuniform float headGrip;');
