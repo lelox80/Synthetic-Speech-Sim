@@ -5697,6 +5697,64 @@ function paintSeemannSignal(time) {
   c.globalCompositeOperation='source-over';
 }
 
+function seemannOceanLevel(time) {
+  // Average the band's energy over several seconds so swells grow instead of twitching on beats.
+  let sum = 0, weight = 0;
+  for (let sample=0;sample<18;sample++) {
+    const lag = sample*.16, influence = Math.exp(-lag/1.1);
+    sum += seemannMusicAt(time-lag).intensity*influence;
+    weight += influence;
+  }
+  return sum/weight;
+}
+
+function seemannOceanSwell(x,z,time) {
+  // Traveling deep-water swells: fixed directions, wavelengths and speeds, independent of audio.
+  const a = .44*(x*.22+z*.975)-time*.92;
+  const b = .86*(-x*.40+z*.916)-time*1.28+1.7;
+  const d = 1.70*(x*.80+z*.60)-time*1.80+3.1;
+  return .64*(Math.sin(a)-.20*Math.cos(2*a))+.25*Math.sin(b)+.11*Math.sin(d);
+}
+
+function paintSeemannOcean(c,w,h,time,height,fade) {
+  const horizon = h*.64, rows = 28, columns = 96;
+  let previous = null;
+  for (let row=0;row<=rows;row++) {
+    const depth = row/rows, perspective = .025+Math.pow(depth,1.9)*.975;
+    const z = (1/perspective-1)*5;
+    const points = [];
+    for (let column=0;column<=columns;column++) {
+      const x = (column/columns-.5)*18/perspective;
+      const swell = seemannOceanSwell(x,z,time);
+      points.push([w*.5+x*perspective*w*.065,
+        horizon+h*.52*perspective-swell*height*h*.125*perspective,swell]);
+    }
+    if (previous) {
+      c.beginPath();
+      previous.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
+      for (let i=points.length-1;i>=0;i--) c.lineTo(points[i][0],points[i][1]);
+      c.closePath();
+      c.fillStyle=`rgba(3,11,18,${.82*fade})`;
+      c.fill();
+    }
+    c.beginPath();
+    points.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y));
+    c.strokeStyle=`rgba(78,143,179,${(.09+depth*.22)*fade})`;
+    c.lineWidth=.65+depth*.65;
+    c.stroke();
+    // Broken highlights travel with the crests, rather than flashing on musical attacks.
+    c.beginPath();
+    for (let i=1;i<points.length;i++) {
+      if (points[i][2]<.70 || points[i-1][2]<.70) continue;
+      c.moveTo(points[i-1][0],points[i-1][1]);c.lineTo(points[i][0],points[i][1]);
+    }
+    c.strokeStyle=`rgba(145,187,204,${(.04+depth*.18)*fade})`;
+    c.lineWidth=.8+depth*.7;
+    c.stroke();
+    previous=points;
+  }
+}
+
 function paintSeemann(time,dt,caption,music) {
   if (!stageInk || !stageWidth || !stageHeight) return;
   const c = stageInk, w = stageWidth, h = stageHeight;
@@ -5705,8 +5763,7 @@ function paintSeemann(time,dt,caption,music) {
   const motion = reduced ? 0 : theme === 'still' ? caption.start : time;
   const intensity = reduced ? music.intensity*.25 : music.intensity;
   const beat = reduced ? 0 : music.attack;
-  const waveStrength = 1+intensity*2.4+beat*.4;
-  const waterLight = 1+intensity*.9+beat*.25;
+  const waveHeight = .22+seemannOceanLevel(time)*1.75;
   const lanternBase = ['lantern','rain','daylight','dusk','ember','still'].includes(theme) ? .85 : .40;
   const lanternTarget = lanternBase+intensity*1.8+beat*.25;
   const lightSpeed = lanternTarget>seaLantern ? 12 : 3;
@@ -5723,25 +5780,12 @@ function paintSeemann(time,dt,caption,music) {
   c.fillStyle = halo;
   c.fillRect(0,0,w,h);
   const waterGlow = c.createLinearGradient(0,horizon-8,0,h);
-  waterGlow.addColorStop(0,`rgba(33,78,111,${.14*waterLight*fade})`);
-  waterGlow.addColorStop(.35,`rgba(20,47,72,${.10*waterLight*fade})`);
+  waterGlow.addColorStop(0,`rgba(33,78,111,${.14*fade})`);
+  waterGlow.addColorStop(.35,`rgba(20,47,72,${.10*fade})`);
   waterGlow.addColorStop(1,'rgba(0,0,0,0)');
   c.fillStyle=waterGlow;
   c.fillRect(0,horizon-8,w,h-horizon+8);
-  for (let row=0;row<15;row++) {
-    const depth = row/14, y = horizon+h*.32*depth*depth;
-    c.beginPath();
-    for (let point=0;point<=64;point++) {
-      const x = w*point/64;
-      const swell = Math.sin(point*.23+motion*.31+row*.79)*(1.2+depth*(storm?8:5))*waveStrength;
-      const ripple = Math.sin(point*.71-motion*.44+row)*(.4+depth*1.2)*(1+intensity*.8+beat*.25);
-      const py = y+swell+ripple;
-      if (point) c.lineTo(x,py); else c.moveTo(x,py);
-    }
-    c.strokeStyle = `rgba(86,152,191,${(.12+depth*.15)*(storm?1.3:1)*waterLight*fade})`;
-    c.lineWidth = .75+depth*.5+intensity*.45;
-    c.stroke();
-  }
+  paintSeemannOcean(c,w,h,reduced?0:time,waveHeight,fade);
 
 
   const lamp = figures[0]?.brainScreen;

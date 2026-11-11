@@ -95,7 +95,7 @@ async function check() {
       const sx=seaSignalCanvas.width/w,sy=seaSignalCanvas.height/h;
       const brain=seaSignalInk.getImageData(Math.floor(lamp.x*w*sx)-12,Math.floor(lamp.y*h*sy)-12,24,24).data;
       let light=0;for(let i=0;i<brain.length;i+=4) light+=(brain[i]+brain[i+1]+brain[i+2])*brain[i+3]/(3*255);
-      return {water:region(0,.66,1,.98),lamp:light/(24*24),source:figures[0].brainLight,position:lamp};
+      return {water:region(0,.66,1,.98),waveHeight:.22+seemannOceanLevel(position())*1.75,lamp:light/(24*24),source:figures[0].brainLight,position:lamp};
     })()`);
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
@@ -123,7 +123,7 @@ async function check() {
     assert.equal(await evaluate('seaFracture'),0);
     await sleep(650);
     const quietStage=await stageBrightness();
-    assert.ok(loudStage.water>quietStage.water*1.2 && loudStage.source>quietStage.source*2 && loudStage.lamp>quietStage.lamp,JSON.stringify({loudStage,quietStage}));
+    assert.ok(loudStage.waveHeight>quietStage.waveHeight*2 && loudStage.source>quietStage.source*2 && loudStage.lamp>quietStage.lamp,JSON.stringify({loudStage,quietStage}));
     console.log('Music-reactive waves and lantern',JSON.stringify({loudStage,quietStage}));
     await evaluate('seaAudioEnergy=qaSavedSeaEnergy;delete window.qaSavedSeaEnergy;');
     await at(108); await screenshot('seemann-rupture');
