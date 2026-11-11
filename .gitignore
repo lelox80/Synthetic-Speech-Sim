@@ -8,6 +8,15 @@
 !work/build-morrow-full.cjs
 !work/build-morrow-mutter.cjs
 !work/build.cjs
+!work/build-seemann.cjs
+!work/seemann-score.cjs
+!work/seemann-lyrics.phones
+!work/seemann-midi.json
+!work/seemann-source.mid
+!work/seemann-backing.ogg
+!work/seemann-stage.js
+!work/seemann-stage.css
+!work/verify-seemann.cjs
 !work/cast.css
 !work/cast.js
 !work/choir.js

@@ -6,13 +6,13 @@ const root = path.resolve(__dirname, '..');
 const output = path.join(root, 'outputs');
 fs.mkdirSync(output, { recursive: true });
 
-for (const builder of ['build.cjs', 'build-morrow-full.cjs', 'build-morrow-mutter.cjs']) {
+for (const builder of ['build.cjs', 'build-morrow-full.cjs', 'build-morrow-mutter.cjs', 'build-seemann.cjs']) {
   execFileSync(process.execPath, [path.join(root, 'work', builder)], {
     cwd: root,
     stdio: 'inherit'
   });
 }
 
-const html = fs.readFileSync(path.join(output, 'VESPER-Mutter-Night-Stage-Two-Handed-Bridge.html'), 'utf8');
+const html = fs.readFileSync(path.join(output, 'Morrow-Seemann.html'), 'utf8');
 fs.writeFileSync(path.join(root, 'index.html'), html.replace(/[ \t]+$/gm, ''));
 console.log('Built index.html');

@@ -1,0 +1,63 @@
+[data-piece="seemann"] .stage {
+  --ward: #708fae;
+  --glow: #152840;
+  background: radial-gradient(ellipse at 50% 44%,#03070e,#010205 64%,#000 90%);
+}
+[data-piece="seemann"] .ward-stage { display: block; opacity: .85; }
+[data-piece="seemann"] .stage:is([data-view="section"],[data-view="glottis"]) .ward-stage { opacity: .20; }
+[data-piece="seemann"] .ward-geometry { display: none; }
+[data-piece="seemann"] .ward-bloom { opacity: .045; }
+[data-piece="seemann"] .stage .lyric {
+  --lyric-ink: #b8cddd;
+  --lyric-halo: #67acc36b;
+  --lyric-bloom: #325b7b57;
+  --accent-ink: #d2efff;
+  bottom: 11%;
+  width: 92%;
+  max-width: 1000px;
+  font-size: clamp(16px,2.35vw,31px);
+  line-height: 1.25;
+  font-weight: 450;
+  letter-spacing: .045em;
+  color: var(--lyric-ink);
+  text-shadow: 0 2px 5px #000,0 0 12px var(--lyric-halo);
+  background: radial-gradient(ellipse,#010306e0,transparent 75%);
+}
+[data-piece="seemann"] .stage .lyric:empty { display: none; }
+[data-piece="seemann"] .lyric .ward-word { transition: color .25s,opacity .35s,text-shadow .35s,transform .35s; }
+[data-piece="seemann"] .lyric .ward-mark.sounding {
+  text-shadow: 0 0 12px var(--lyric-halo),0 0 28px var(--lyric-bloom);
+  transform: translateY(calc(-1px * var(--caption-hit)));
+}
+[data-piece="seemann"] .lyric:is([data-style="lantern"],[data-style="ember"],[data-style="dusk"]) {
+  --lyric-ink: #d6c5ae;
+  --lyric-halo: #cf995b80;
+  --lyric-bloom: #c468334d;
+  --accent-ink: #ffdfb7;
+}
+[data-piece="seemann"] .lyric[data-style="storm"] {
+  --accent-ink: #e4f5ff;
+  --lyric-halo: #8cafcf80;
+}
+[data-piece="seemann"] .lyric[data-style="undertow"] .ward-mark.sounding {
+  transform: translateY(calc(5px * var(--caption-hit)));
+  color: #72b4cc;
+}
+[data-piece="seemann"] .lyric[data-style="still"] { letter-spacing: .10em; }
+[data-piece="seemann"] .lyric:is([data-style="cold"],[data-style="alone"]) {
+  --lyric-ink: #a3b3c7;
+  --accent-ink: #e3f2ff;
+  --lyric-halo: #8da8cf66;
+  letter-spacing: .09em;
+  font-weight: 380;
+}
+[data-piece="seemann"] .lyric[data-style="cold"] .ward-mark.sounding {
+  filter: blur(calc(.4px * var(--caption-hit)));
+  text-shadow: -2px 0 8px #96c0e36b,2px 0 12px #6f86ab6b;
+}
+@media(max-width:620px) {
+  [data-piece="seemann"] .stage .lyric { bottom: 17%; font-size: clamp(16px,4.1vw,23px); }
+}
+@media(prefers-reduced-motion:reduce) {
+  [data-piece="seemann"] .lyric .ward-word { transition: none; transform: none !important; filter: none !important; }
+}
