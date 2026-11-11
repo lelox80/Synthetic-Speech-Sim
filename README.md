@@ -4,7 +4,9 @@ A browser performance featuring Morrow and a choir of anatomical wireframe heads
 
 The current version includes blue wireframe heads, visible red internals, round wireframe eyeballs, individual accessories, anatomy views, scroll zoom, and staged performances of Rammstein's “Mutter” and “Seemann” with timed lyrics and hand gestures. Choose a performance under **Controls → Repertoire**.
 
-“Seemann” opens by default. Its sea setting includes restrained water movement, storm passages, lantern light, a reaching gesture, and a fading cold ending. The score uses both vocal tracks and lyric timings from the supplied MIDI. Five isolated octave outliers are corrected, and the verses are lowered by an octave for Morrow's baritone register. The final word carries across two MIDI notes to preserve the four “kalt” repetitions in the supplied text. The backing is rendered from the instrumental MIDI tracks.
+“Seemann” opens by default. Its sea setting includes illuminated water, storm passages, lantern light and reflections, a reaching gesture, and a fading cold ending. Instrumental breaks drive severe hologram tearing, wireframe dropouts, displaced image bands, and erratic head movements. The vocal returns bring partial recovery, with persistent distortion through the refrains. Anatomy views and the reduced-motion setting present a steady head.
+
+The score uses both vocal tracks and lyric timings from the supplied MIDI. Five isolated octave outliers are corrected, and the verses are lowered by an octave for Morrow's baritone register. The final word carries across two MIDI notes to preserve the four “kalt” repetitions in the supplied text. The backing is rendered from the instrumental MIDI tracks.
 
 Under **Controls → Speak**, enter text, choose a singer, and select **Simulated English** or **Simulated German**. Speaking speed ranges from **0.5× to 2×** and applies when you press **Speak**. Locally installed system voices are also available as separate choices. The simulated voices have a stylized sound and approximate pronunciation.
 

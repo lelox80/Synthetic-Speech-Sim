@@ -15,6 +15,30 @@ function replace(from,to) {
 
 replace('<title>Mutter · Night Stage</title>','<title>Seemann · Synthetic Speech Sim</title>');
 replace('</style>',read('seemann-stage.css') + '\n</style>');
+replace('<div class="scanlines"', '<canvas id="seemannSignal" class="seemann-signal" aria-hidden="true"></canvas>\n        <div class="scanlines"');
+replace('uniform float eyePass;', 'uniform float eyePass;\nuniform vec3 fracture;');
+replace('uniform vec2 eyeCover;', 'uniform vec2 eyeCover;\nuniform vec3 fracture;');
+replace("'foreheadGlow','orbit'", "'foreheadGlow','fracture','orbit'");
+replace('      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);', `      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);
+      gl.uniform3f(uniforms.fracture,mode || speechRun ? 0 : figure.fracture ?? 0,
+        figure.fractureTime ?? 0,figure.model);`);
+replace('  p -= origin;', `  if (fracture.x > .01) {
+    float tick = floor(fracture.y * 11.);
+    float band = floor(p.y * 13.);
+    float noise = fract(sin(band * 43.71 + tick * 17.37 + fracture.z * 9.1) * 43758.5453);
+    float slice = step(.58, noise);
+    float direction = sin(band * 3.7 + tick * 2.3);
+    p.x += fracture.x * slice * direction * (.12 + .42 * noise);
+    p.y += fracture.x * slice * sin(tick + band * 1.7) * .035;
+    p.z += fracture.x * slice * cos(band * 2.9 + tick) * .075;
+  }
+  p -= origin;`);
+replace('  alpha *= display.w;', `  float damagedRow = floor(gl_FragCoord.y / 13.);
+  float dropout = fract(sin(damagedRow * 17.13 + floor(fracture.y * 9.) * 4.7) * 13758.17);
+  alpha *= 1. - fracture.x * .83 * step(.76,dropout);
+  alpha *= display.w;`);
+replace('  drawPulse(drift, figures[talk?.index ?? 0]);',
+  '  paintSeemannSignal(t);\n  drawPulse(drift, figures[talk?.index ?? 0]);');
 replace('<script>\n',`<script id="seemannBackingData" type="application/octet-stream">${backing}</script>\n<script>\n`);
 replace('const $ = id => document.getElementById(id);',`const seemannTake = ${JSON.stringify(take)};
 const seemannSong = {

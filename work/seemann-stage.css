@@ -3,7 +3,9 @@
   --glow: #152840;
   background: radial-gradient(ellipse at 50% 44%,#03070e,#010205 64%,#000 90%);
 }
-[data-piece="seemann"] .ward-stage { display: block; opacity: .85; }
+[data-piece="seemann"] .ward-stage { display: block; opacity: 1; }
+.seemann-signal { display: none; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+[data-piece="seemann"] .stage[data-view="ensemble"] .seemann-signal { display: block; }
 [data-piece="seemann"] .stage:is([data-view="section"],[data-view="glottis"]) .ward-stage { opacity: .20; }
 [data-piece="seemann"] .ward-geometry { display: none; }
 [data-piece="seemann"] .ward-bloom { opacity: .045; }
@@ -24,6 +26,10 @@
   background: radial-gradient(ellipse,#010306e0,transparent 75%);
 }
 [data-piece="seemann"] .stage .lyric:empty { display: none; }
+[data-piece="seemann"] .stage[data-fracture="unstable"] .lyric,
+[data-piece="seemann"] .stage[data-fracture="rupture"] .lyric {
+  text-shadow: calc(-3px * var(--sea-fracture)) 0 8px #689cc866,calc(3px * var(--sea-fracture)) 0 8px #ff334344,0 2px 5px #000;
+}
 [data-piece="seemann"] .lyric .ward-word { transition: color .25s,opacity .35s,text-shadow .35s,transform .35s; }
 [data-piece="seemann"] .lyric .ward-mark.sounding {
   text-shadow: 0 0 12px var(--lyric-halo),0 0 28px var(--lyric-bloom);

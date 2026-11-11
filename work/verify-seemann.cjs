@@ -74,6 +74,15 @@ async function check() {
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
     await screenshot('seemann-open-water');
+    for (const time of [66,108,172,204,266]) {
+      await at(time);
+      const glitch=await evaluate('({amount:seaFracture,state:stage.dataset.fracture,mesh:figures[0].fracture,ghosts:seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)})');
+      assert.ok(glitch.amount>.8 && glitch.mesh>.8 && glitch.state==='rupture' && glitch.ghosts,JSON.stringify(glitch));
+    }
+    await at(108); await screenshot('seemann-rupture');
+    await at(120.3);
+    assert.ok(await evaluate("seaFracture>.35 && seaFracture<.75 && stage.dataset.fracture==='unstable'"));
+    await sleep(550); await screenshot('seemann-partial-recovery');
     assert.ok((await at(51.9)).actor.reach>.45);
     await screenshot('seemann-hand');
     assert.equal((await at(120.3)).theme,'lantern');
@@ -93,6 +102,7 @@ async function check() {
     assert.deepEqual((await at(165.2)).actor.hands,[1,1]);
     assert.equal(await evaluate('wardCue.options.length'),11);
     assert.equal(await evaluate('document.body.dataset.piece'),'mutter');
+    assert.ok(await evaluate('figures.every(figure=>figure.fracture===0)'));
     await evaluate('selectSong(songs.findIndex(song=>song!==morrowFull && song!==seemannSong))');
     assert.ok(await evaluate("wardCue.hidden && $('backingToggle').hidden && !document.body.dataset.piece"));
     await evaluate('selectSong(songs.indexOf(seemannSong))');
@@ -128,6 +138,8 @@ async function check() {
     await screenshot('seemann-mobile');
     await send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});
     await at(120.3);
+    assert.equal(await evaluate('seaFracture'),0);
+    assert.ok(await evaluate('figures.every(figure=>figure.fracture===0)'));
     assert.deepEqual(errors,[]);
     console.log('Speech, song switching, reduced motion, and mobile checks passed.');
   } finally { ws.close(); }
