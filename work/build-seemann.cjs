@@ -25,6 +25,7 @@ replace('      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);', `
       gl.uniform3f(uniforms.fracture,mode || speechRun ? 0 : figure.fracture ?? 0,
         figure.fractureTime ?? 0,figure.model);
       gl.uniform1f(uniforms.headGrip,acting?.headGrip ?? 0);`);
+replace('    p = point;\n    float finger', '    p = point * (headGrip > .5 ? 1.12 : 1.);\n    float finger');
 replace('    p.xy = vec2(p.x*cos(roll) - p.y*sin(roll),p.x*sin(roll) + p.y*cos(roll));',
   `    if (shielding && headGrip > .5) roll = mix(.14,-.10,cover);
     p.xy = vec2(p.x*cos(roll) - p.y*sin(roll),p.x*sin(roll) + p.y*cos(roll));`);
@@ -72,7 +73,10 @@ replace('function prepareBacking(context, song) {',`function prepareBacking(cont
   if (song === seemannSong) {
     if (!seemannBackingPromise) {
       const bytes = Uint8Array.from(atob($('seemannBackingData').textContent.trim()),byte=>byte.charCodeAt(0));
-      seemannBackingPromise = context.decodeAudioData(bytes.buffer).catch(error=>{
+      seemannBackingPromise = context.decodeAudioData(bytes.buffer).then(buffer=>{
+        seaAudioEnergy = analyseSeemannAudio(buffer,seemannTake.words);
+        return buffer;
+      }).catch(error=>{
         seemannBackingPromise = null;
         throw error;
       });
@@ -92,9 +96,13 @@ replace('function updateWard(time, dt, live, note, lyricTime) {',`function updat
     updateSeemann(time,dt,live,note,lyricTime);
     return;
   }`);
-replace('function wardBeat(time) {\n  const hits = stageShowData.lights;',
-  'function wardBeat(time, hits = stageShowData.lights) {');
-replace('showSongs();\nselectSong(0);\nsetView(0);',`${read('seemann-stage.js')}\nshowSongs();\nselectSong(0);\nsetView(0);`);
+replace('showSongs();\nselectSong(0);\nsetView(0);',`${read('seemann-energy.js')}\n${read('seemann-stage.js')}
+showSongs();
+selectSong(0);
+setView(0);
+if (window.OfflineAudioContext) {
+  prepareBacking(new OfflineAudioContext(1,1,24000),seemannSong).catch(()=>{});
+}`);
 new vm.Script(html.match(/<script>\s*([\s\S]+)<\/script>/)[1]);
 fs.writeFileSync(path.join(output,'Morrow-Seemann.html'),html);
 console.log(`Built Seemann with ${take.lines.length} lyric lines and ${take.notes.length} vocal events.`);

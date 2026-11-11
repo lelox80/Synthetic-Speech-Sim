@@ -62,6 +62,7 @@ async function check() {
       if(await evaluate("document.readyState==='complete' && typeof seemannSong!=='undefined' && typeof projection==='function'")) break;
       await sleep(100);
     }
+    await evaluate('prepareBacking(new OfflineAudioContext(1,1,24000),seemannSong)');
     const model=await evaluate('({title:score().title,lines:seemannTake.lines.length,notes:seemannTake.notes.length,duration:score().duration,events:score().events.length,projection:Boolean(projection),sections:wardCue.options.length})');
     assert.equal(model.title,'Seemann'); assert.equal(model.lines,38); assert.ok(model.events>500 && model.projection); assert.equal(model.sections,13);
     console.log('Seemann score',JSON.stringify(model));
@@ -74,13 +75,24 @@ async function check() {
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
     await screenshot('seemann-open-water');
-    for (const time of [66,108,172,266]) {
+    for (const time of [66,108]) {
       const pose=await at(time);
-      assert.deepEqual(pose.actor.hands,[1,1]);
+      assert.ok(pose.actor.hands.every(value=>value>.98));
       assert.equal(pose.actor.headGrip,1);
       const glitch=await evaluate('({amount:seaFracture,state:stage.dataset.fracture,mesh:figures[0].fracture,ghosts:seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)})');
       assert.ok(glitch.amount>.8 && glitch.mesh>.8 && glitch.state==='rupture' && glitch.ghosts,JSON.stringify(glitch));
     }
+    await at(172);
+    assert.ok(await evaluate('seaFracture>.1 && seaFracture<.6'));
+    await at(266);
+    assert.ok(await evaluate('seaFracture<.15'));
+    // Removing the measured audio energy must remove the effect at the same song time.
+    await evaluate(`window.qaSavedSeaEnergy=seaAudioEnergy;
+      const silent=new OfflineAudioContext(1,1,8000).createBuffer(1,8000*120,8000);
+      seaAudioEnergy=analyseSeemannAudio(silent,seemannTake.words);`);
+    await at(108);
+    assert.equal(await evaluate('seaFracture'),0);
+    await evaluate('seaAudioEnergy=qaSavedSeaEnergy;delete window.qaSavedSeaEnergy;');
     await at(108); await screenshot('seemann-rupture');
     const returning=await at(116.1);
     const lowering=await at(118);
@@ -96,7 +108,7 @@ async function check() {
       assert.equal(await evaluate('seaFracture'),0);
       assert.ok(await evaluate('!seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)'));
     }
-    console.log('Four instrumental grips, slow lowering, and clean quiet passages passed.');
+    console.log('Audio intensity peaks and dips, silence response, hand lowering, and quiet vocals passed.');
     assert.ok((await at(51.9)).actor.reach>.45);
     await screenshot('seemann-hand');
     assert.equal((await at(120.3)).theme,'lantern');

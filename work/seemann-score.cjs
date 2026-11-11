@@ -84,8 +84,6 @@ module.exports = function scoreSeemann(midi, sheet) {
     [205.022077,'Lantern reprise','lantern'], [232.415421,'The night','night'],
     [246.112093,'Alone','alone'], [253.174439,'Kalt','cold'], [265.0,'Ebb','release']
   ].map(([time,name,mood])=>[time,name,name,mood]);
-  const drums = midi.tracks[8].notes.filter(note=>[36,38,49,57].includes(note[2]));
   return { duration,notes,lines,sections,words,cues,corrections,
-    bpm:60000000 / midi.tempos[0][1],
-    lights:drums.map(([start,,pitch,velocity])=>[start,velocity/127*(pitch===36?.6:.35)]) };
+    bpm:60000000 / midi.tempos[0][1] };
 };

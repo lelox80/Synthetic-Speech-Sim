@@ -4,7 +4,7 @@ A browser performance featuring Morrow and a choir of anatomical wireframe heads
 
 The current version includes blue wireframe heads, visible red internals, round wireframe eyeballs, individual accessories, anatomy views, scroll zoom, and staged performances of Rammstein's “Mutter” and “Seemann” with timed lyrics and hand gestures. Choose a performance under **Controls → Repertoire**.
 
-“Seemann” opens by default. Its sea setting includes illuminated water, storm passages, lantern light and reflections, a reaching gesture, and a fading cold ending. Four loud instrumental breaks drive severe hologram tearing, wireframe dropouts, displaced image bands, and erratic head movements. Morrow grips both sides of his head as the distortion peaks, then slowly lowers his hands when the vocals return. The distortion clears within the first moment of recovery, and quiet singing passages return to a steady head. Anatomy views and the reduced-motion setting present a steady head throughout.
+“Seemann” opens by default. Its sea setting includes illuminated water, storm passages, lantern light and reflections, a reaching gesture, and a fading cold ending. The stage analyses the decoded backing waveform in approximately 20 ms windows. Measured loudness and musical attacks drive the hologram tearing, wireframe dropouts, displaced image bands, and erratic head movements. Loud instrumental peaks make Morrow grip both sides of his head. His hands lower slowly as the intensity drops or vocals return. Vocal phrases remain steady. The effect follows the audio playback clock through pauses and seeking. Anatomy views and the reduced-motion setting present a steady head throughout.
 
 The score uses both vocal tracks and lyric timings from the supplied MIDI. Five isolated octave outliers are corrected, and the verses are lowered by an octave for Morrow's baritone register. The final word carries across two MIDI notes to preserve the four “kalt” repetitions in the supplied text. The backing is rendered from the instrumental MIDI tracks.
 
@@ -32,6 +32,7 @@ The build uses Node's standard library and requires no package installation. It 
 - `work/build-seemann.cjs` adds Seemann alongside Mutter and makes it the opening performance.
 - `work/seemann-score.cjs` maps the supplied lyrics and phonemes to the MIDI vocal tracks.
 - `work/seemann-stage.js` and `work/seemann-stage.css` provide the sea setting and timed acting.
+- `work/seemann-energy.js` measures backing intensity and derives the glitch and hand-motion curves.
 - `work/mutter-speech.js` handles speech playback, voice selection, and speed.
 - `work/mutter-speech-phrasing.js` handles pronunciation, timing, stress, and intonation.
 - `work/mutter-phonation.js` models vocal-fold excitation and articulation.

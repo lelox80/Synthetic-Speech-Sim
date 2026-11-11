@@ -6,12 +6,6 @@ let seaLantern = 0;
 let seaFracture = 0;
 const seaSignalCanvas = $('seemannSignal');
 const seaSignalInk = seaSignalCanvas.getContext('2d');
-const seaInstrumentals = [
-  {start:61.635024,hold:63.4,end:75.331696,clear:79.5},
-  {start:100.157,hold:102.2,end:115.993691,clear:120.5},
-  {start:168.640,hold:170.3,end:178.056736,clear:182.5},
-  {start:264.516978,hold:265.6,end:267.941146,clear:272.5}
-];
 
 function syncSeemannCues() {
   const sections = score() === seemannSong ? seemannTake.sections : fullTake.sections;
@@ -32,7 +26,7 @@ function syncSeemannCues() {
   figures.forEach(figure=>{figure.acting=null;figure.foreheadGlow=0;figure.fracture=0;});
 }
 
-function seemannAct(time,caption,breakdown) {
+function seemannAct(time,caption,music) {
   const still = reducedMotion.matches;
   const reachLine = seemannCaptions[6];
   const hand = reachLine.words.at(-1);
@@ -42,13 +36,7 @@ function seemannAct(time,caption,breakdown) {
   const drift = caption?.style === 'drift' ? -.09 : caption?.style === 'undertow' ? .07 : 0;
   const tick = Math.floor(time*8);
   const twitch = still ? 0 : (moteSeed(tick,8)-.5)*seaFracture;
-  let grip = 0;
-  if (breakdown) {
-    const {start,hold,end,clear} = breakdown;
-    const raising = wardEase((time-start)/(hold-start));
-    const lowering = 1-wardEase((time-end)/(clear-end));
-    grip = still ? Number(time>=hold && time<end) : raising*lowering;
-  }
+  const grip = still ? Number(music.grip>.5) : music.grip;
   return {yaw:(still?0:.018*Math.sin(time*.23))+drift+twitch*.52,
     nod:.035+alone*.04+(caption?.style === 'undertow'?.06:0)+twitch*.28,
     gaze:[(alone?0:drift*.8)+twitch*.68,alone?.03:-.10],
@@ -100,7 +88,7 @@ function paintSeemann(time,dt,live,caption) {
   seaLantern = mix(seaLantern,lanternTarget,reduced?1:1-Math.exp(-dt*2.1));
   const fade = 1-wardEase((time-270)/17.5);
   const storm = theme === 'storm' || theme === 'undertow';
-  const beat = live && !reduced ? wardBeat(time,seemannTake.lights) : 0;
+  const beat = live && !reduced ? seemannMusicAt(time).attack : 0;
   const horizon = h*.64;
   c.setTransform(stageRatio,0,0,stageRatio,0,0);
   c.clearRect(0,0,w,h);
@@ -195,14 +183,8 @@ function updateSeemann(time,dt,live,note,lyricTime) {
   }
   const sung = seemannCaptions[note?.line ?? -1];
   const caption = sung ?? seemannCaptions.findLast(line=>line.start<=time && time<line.end+.20);
-  const breakdown = seaInstrumentals.find(({start,clear})=>time>=start && time<clear);
-  seaFracture = 0;
-  if (breakdown && !reducedMotion.matches) {
-    const {start,end} = breakdown;
-    const attack = wardEase((time-start)/1.15);
-    const recovery = 1-wardEase((time-end)/1.2);
-    seaFracture = time<end ? mix(.72,1,attack) : .20*recovery;
-  }
+  const music = seemannMusicAt(time);
+  seaFracture = reducedMotion.matches ? 0 : music.fracture;
   stage.style.setProperty('--sea-fracture',seaFracture.toFixed(3));
   stage.dataset.fracture=seaFracture>.80?'rupture':seaFracture>.35?'unstable':'clear';
   setWardCaption(caption,sung?lyricTime:time);
@@ -212,6 +194,6 @@ function updateSeemann(time,dt,live,note,lyricTime) {
     figure.foreheadGlow=0;
     figure.fracture=seaFracture*(index===0?1:.78);
     figure.fractureTime=time;
-    figure.acting=index===0 ? seemannAct(time,caption,breakdown) : null;
+    figure.acting=index===0 ? seemannAct(time,caption,music) : null;
   });
 }
