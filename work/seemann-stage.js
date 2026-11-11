@@ -23,7 +23,7 @@ function syncSeemannCues() {
   delete stage.dataset.mood;
   delete stage.dataset.lighting;
   stage.removeAttribute('data-refrain');
-  figures.forEach(figure=>{figure.acting=null;figure.foreheadGlow=0;figure.fracture=0;});
+  figures.forEach(figure=>{figure.acting=null;figure.foreheadGlow=0;figure.fracture=0;figure.brainLight=0;figure.brainScreen=null;});
 }
 
 function seemannAct(time,caption,music) {
@@ -84,7 +84,24 @@ function paintSeemannSignal(time) {
   }
   const c = seaSignalInk;
   c.clearRect(0,0,w,h);
-  if (score()!==seemannSong || speechRun || mode || reducedMotion.matches || seaFracture<.03) return;
+  if (score()!==seemannSong || speechRun) return;
+  const lead = figures[0];
+  const lamp = lead?.brainScreen;
+  if (lamp && (spotlight===null || spotlight===0) && mode!==2) {
+    const strength = Math.min(1,lead.brainLight/2.5);
+    const overload = clamp((lead.brainLight-2.5)/4.5,0,1);
+    const x = lamp.x*w, y = lamp.y*h, radius = lamp.radius*h*(.62+strength*.55+overload*.65);
+    const glow = c.createRadialGradient(x,y,0,x,y,radius);
+    glow.addColorStop(0,`rgba(255,${205+Math.round(overload*40)},${133+Math.round(overload*80)},${.10+strength*.62+overload*.25})`);
+    glow.addColorStop(.16,`rgba(255,${144+Math.round(overload*50)},54,${.04+strength*.23+overload*.28})`);
+    glow.addColorStop(.55,`rgba(216,70,25,${.015+strength*.09+overload*.12})`);
+    glow.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=glow;
+    c.fillRect(x-radius,y-radius,radius*2,radius*2);
+    c.fillStyle=`rgba(255,237,185,${.28+strength*.70})`;
+    c.beginPath();c.arc(x,y,Math.max(1.3,radius*.035*(1+overload)),0,TAU);c.fill();
+  }
+  if (mode || reducedMotion.matches || seaFracture<.03) return;
   const tick = Math.floor(time*12);
   const amount = seaFracture;
   const skew = (moteSeed(tick,9)-.5)*w*.047*amount;
@@ -154,35 +171,14 @@ function paintSeemann(time,dt,caption,music) {
     c.stroke();
   }
 
-  if (seaLantern>.005) {
-    const x = w*.805, y = h*.31, glowSize = h*(.25+intensity*.22);
-    const flicker = reduced?1:.94+.06*Math.sin(motion*3.1)*Math.sin(motion*7.7);
-    const glow = c.createRadialGradient(x,y,0,x,y,glowSize);
-    glow.addColorStop(0,`rgba(255,205,139,${Math.min(.90,.46*seaLantern)*flicker*fade})`);
-    glow.addColorStop(.18,`rgba(197,119,51,${.15*seaLantern*fade})`);
-    glow.addColorStop(1,'rgba(0,0,0,0)');
-    c.fillStyle = glow;
-    c.fillRect(x-glowSize,y-glowSize,glowSize*2,glowSize*2);
-    const beam = c.createLinearGradient(x,y,x,horizon);
-    beam.addColorStop(0,`rgba(244,183,106,${.11*seaLantern*fade})`);
-    beam.addColorStop(1,'rgba(157,105,47,0)');
-    c.fillStyle=beam;
-    const beamWidth = w*(.04+intensity*.055);
-    c.beginPath();c.moveTo(x-4,y);c.lineTo(x+beamWidth,horizon);c.lineTo(x-beamWidth,horizon);c.closePath();c.fill();
-    c.strokeStyle = `rgba(195,158,113,${Math.min(1,.36*seaLantern)*fade})`;
-    c.lineWidth = 1.3;
-    c.beginPath();
-    c.moveTo(x,h*.73); c.lineTo(x,y+h*.018);
-    c.moveTo(x-6,y-8); c.lineTo(x+6,y-8); c.lineTo(x+5,y+8); c.lineTo(x-5,y+8); c.closePath();
-    c.stroke();
-    c.fillStyle = `rgba(255,235,193,${Math.min(1,.82*seaLantern)*flicker*fade})`;
-    c.fillRect(x-2-intensity,y-4-intensity,4+intensity*2,8+intensity*2);
-    c.strokeStyle = `rgba(255,220,164,${intensity*.50*fade})`;
-    c.beginPath();c.moveTo(x-7-intensity*6,y);c.lineTo(x+7+intensity*6,y);c.stroke();
+
+  const lamp = figures[0]?.brainScreen;
+  if (seaLantern>.005 && (spotlight===null || spotlight===0) && mode!==2) {
+    const x = (lamp?.x ?? .5)*w;
     for (let row=0;row<20;row++) {
       const depth = row/19;
       const shift = reduced?0:Math.sin(motion*.6+row)*3;
-      c.fillStyle = `rgba(225,161,89,${.20*seaLantern*(1-depth*.72)*fade})`;
+      c.fillStyle = `rgba(225,138,69,${.15*seaLantern*(1-depth*.72)*fade})`;
       const width = (8+depth*40)*(1+intensity*.6);
       c.fillRect(x-width/2+shift,horizon+depth*depth*h*.32,width,1+depth*.5+intensity*.5);
     }
@@ -230,8 +226,12 @@ function updateSeemann(time,dt,live,note,lyricTime) {
   animateSeemannLyrics(caption,sung?lyricTime:time,music);
   stage.dataset.lighting=caption?.style ?? seemannTake.sections[index][3];
   paintSeemann(time,dt,caption,music);
+  // Only sustained loud backing opens the overload; quiet vocals retain the original light.
+  const strain = wardEase((music.intensity-.62)/.30);
+  const overload = strain*(reducedMotion.matches ? .85 : .88+.08*Math.sin(time*17)+music.attack*.35);
   figures.forEach((figure,index)=>{
     figure.foreheadGlow=0;
+    figure.brainLight=index===0 ? seaLantern*(1+overload*1.1)*(1-wardEase((time-270)/17.5)) : 0;
     figure.fracture=seaFracture*(index===0?1:.78);
     figure.fractureTime=time;
     figure.acting=index===0 ? seemannAct(time,caption,music) : null;

@@ -20,14 +20,26 @@ replace('      node.textContent = word;', `      node.textContent = word;
       node.style.setProperty('--word-index',index);`);
 replace('<div class="scanlines"', '<canvas id="seemannSignal" class="seemann-signal" aria-hidden="true"></canvas>\n        <div class="scanlines"');
 replace('uniform float eyePass;', 'uniform float eyePass;\nuniform vec3 fracture;\nuniform float headGrip;');
-replace('uniform vec2 eyeCover;', 'uniform vec2 eyeCover;\nuniform vec3 fracture;\nuniform float headGrip;');
-replace("'foreheadGlow','orbit'", "'foreheadGlow','fracture','headGrip','orbit'");
+replace('uniform vec2 eyeCover;', 'uniform vec2 eyeCover;\nuniform vec3 fracture;\nuniform float headGrip;\nuniform float brainLight;');
+replace("'foreheadGlow','orbit'", "'foreheadGlow','fracture','headGrip','brainLight','orbit'");
 replace('      gl.uniform2f(uniforms.eyeCover,acting?.hands[0] ?? 0,acting?.hands[1] ?? 0);',
   '      gl.uniform2f(uniforms.eyeCover,acting?.headGrip ? 0 : acting?.hands[0] ?? 0,acting?.headGrip ? 0 : acting?.hands[1] ?? 0);');
 replace('      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);', `      gl.uniform1f(uniforms.foreheadGlow,figure.foreheadGlow ?? 0);
       gl.uniform3f(uniforms.fracture,mode || speechRun ? 0 : figure.fracture ?? 0,
         figure.fractureTime ?? 0,figure.model);
-      gl.uniform1f(uniforms.headGrip,acting?.headGrip ?? 0);`);
+      gl.uniform1f(uniforms.headGrip,acting?.headGrip ?? 0);
+      gl.uniform1f(uniforms.brainLight,mode === 2 || speechRun ? 0 : figure.brainLight ?? 0);
+      if (figure.brainLight > 0 && mode !== 2) {
+        const point = studyPoint(wardHeadFit([0,.78,-.25]),mode,
+          yaw + spread + (acting?.yaw ?? 0),pitch + (acting?.nod ?? 0),w,h,zoom,visible.length,index);
+        figure.brainScreen = {x:point[0]/w,y:point[1]/h - (mode ? 0 : .005*Math.sin(time*1.4+index)),radius:.14*scale};
+      } else figure.brainScreen = null;`);
+replace('function studyPoint(point, mode, yaw, pitch, width, height, zoom = 1) {',
+  'function studyPoint(point, mode, yaw, pitch, width, height, zoom = 1, count = 1, index = 0) {');
+replace('  const { origin, seats } = studyGeometry(mode,1,aspect);',
+  '  const { origin, seats } = studyGeometry(mode,count,aspect);');
+replace('  const [sx,sy,scale] = seats[0].map(value => value * zoom);',
+  '  const [sx,sy,scale] = seats[index].map(value => value * zoom);');
 replace('    p = point;\n    float finger', '    p = point * (headGrip > .5 ? 1.12 : 1.);\n    float finger');
 replace('    p.xy = vec2(p.x*cos(roll) - p.y*sin(roll),p.x*sin(roll) + p.y*cos(roll));',
   `    if (shielding && headGrip > .5) roll = mix(.14,-.10,cover);
@@ -56,6 +68,17 @@ replace('  alpha *= display.w;', `  float damagedRow = floor(gl_FragCoord.y / 13
   float dropout = fract(sin(damagedRow * 17.13 + floor(fracture.y * 9.) * 4.7) * 13758.17);
   float damage = kind >= 20. && kind < 22. ? 0. : fracture.x;
   alpha *= 1. - damage * .83 * step(.76,dropout);
+  if (brainLight > .001) {
+    vec3 fromLight = sectionPoint - vec3(0.,.78,-.25);
+    float overload = clamp((brainLight - 2.5) / 4.5,0.,1.);
+    float illumination = exp(-dot(fromLight,fromLight) / (.23 + overload * .12)) * brainLight;
+    bool neural = kind == 23. || kind == 31.;
+    if (neural) {
+      hue = mix(hue,vec3(1.,.48,.12),min(.82,illumination * .43));
+      hue = mix(hue,vec3(1.,.85,.48),overload * min(.65,illumination * .12));
+      alpha *= 1. + min(2.2 + overload * 2.,illumination * 1.4);
+    } else if (kind < 1.5 || kind == 22.) alpha *= 1. + min(1.2 + overload * .55,illumination * .70);
+  }
   alpha *= display.w;`);
 replace('  drawPulse(drift, figures[talk?.index ?? 0]);',
   '  paintSeemannSignal(t);\n  drawPulse(drift, figures[talk?.index ?? 0]);');

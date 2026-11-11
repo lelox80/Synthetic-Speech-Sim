@@ -83,15 +83,19 @@ async function check() {
     })()`);
     const stageBrightness=()=>evaluate(`(() => {
       const w=wardStageCanvas.width,h=wardStageCanvas.height;
-      const region=(left,top,right,bottom)=>{
+      const region=(left,top,right,bottom,ink=stageInk)=>{
         const x=Math.floor(w*left),y=Math.floor(h*top);
         const width=Math.max(1,Math.floor(w*(right-left))),height=Math.max(1,Math.floor(h*(bottom-top)));
-        const pixels=stageInk.getImageData(x,y,width,height).data;
+        const pixels=ink.getImageData(x,y,width,height).data;
         let energy=0;
         for(let i=0;i<pixels.length;i+=4) energy+=(pixels[i]*.2126+pixels[i+1]*.7152+pixels[i+2]*.0722)*pixels[i+3]/255;
         return energy/(width*height);
       };
-      return {water:region(0,.66,1,.98),lamp:region(.74,.20,.87,.45)};
+      const lamp=figures[0].brainScreen;
+      const sx=seaSignalCanvas.width/w,sy=seaSignalCanvas.height/h;
+      const brain=seaSignalInk.getImageData(Math.floor(lamp.x*w*sx)-12,Math.floor(lamp.y*h*sy)-12,24,24).data;
+      let light=0;for(let i=0;i<brain.length;i+=4) light+=(brain[i]+brain[i+1]+brain[i+2])*brain[i+3]/(3*255);
+      return {water:region(0,.66,1,.98),lamp:light/(24*24),source:figures[0].brainLight,position:lamp};
     })()`);
     const camera=await evaluate('[yaw,pitch,projectionZoom]');
     assert.equal((await at(21.2)).caption,'Komm in mein Boot');
@@ -109,6 +113,7 @@ async function check() {
     assert.ok(await evaluate('seaFracture<.15'));
     await at(108);await sleep(500);
     const loudStage=await stageBrightness();
+    assert.ok(loudStage.position.x>.35 && loudStage.position.x<.65 && loudStage.position.y>.15 && loudStage.position.y<.45);
     assert.ok(await evaluate('seemannMusicAt(108).intensity>.9'));
     // Removing the measured audio energy must remove the effect at the same song time.
     await evaluate(`window.qaSavedSeaEnergy=seaAudioEnergy;
@@ -118,7 +123,7 @@ async function check() {
     assert.equal(await evaluate('seaFracture'),0);
     await sleep(650);
     const quietStage=await stageBrightness();
-    assert.ok(loudStage.water>quietStage.water*1.2 && loudStage.lamp>quietStage.lamp*1.6,JSON.stringify({loudStage,quietStage}));
+    assert.ok(loudStage.water>quietStage.water*1.2 && loudStage.source>quietStage.source*2 && loudStage.lamp>quietStage.lamp,JSON.stringify({loudStage,quietStage}));
     console.log('Music-reactive waves and lantern',JSON.stringify({loudStage,quietStage}));
     await evaluate('seaAudioEnergy=qaSavedSeaEnergy;delete window.qaSavedSeaEnergy;');
     await at(108); await screenshot('seemann-rupture');
@@ -136,7 +141,7 @@ async function check() {
       const quiet=await at(time);
       assert.equal(quiet.actor.cover,0);
       assert.equal(await evaluate('seaFracture'),0);
-      assert.ok(await evaluate('!seaSignalInk.getImageData(0,0,seaSignalCanvas.width,seaSignalCanvas.height).data.some((value,i)=>i%4===3 && value>0)'));
+      assert.ok(await evaluate('figures.every(figure=>figure.fracture===0)'));
     }
     for (const time of [120.3,150,219.4,250.2,259]) {
       const refrain=await at(time);
@@ -156,15 +161,29 @@ async function check() {
     assert.ok((await at(250.2)).actor.staring);
     await screenshot('seemann-alone');
     assert.deepEqual(await evaluate('[yaw,pitch,projectionZoom]'),camera);
+    await at(21.2);
+    const normalCore=await evaluate('figures[0].brainScreen');
+    await evaluate('setProjectionZoom(1.4);yaw+=.4;');await frame();
+    const movedCore=await evaluate('figures[0].brainScreen');
+    assert.ok(movedCore.radius>normalCore.radius*1.3 && Math.abs(movedCore.x-normalCore.x)>.01);
+    await evaluate('setView(1)');await frame();
+    assert.ok(await evaluate("Boolean(figures[0].brainScreen) && getComputedStyle(seaSignalCanvas).display!=='none'"));
+    await screenshot('seemann-brain-section');
+    await evaluate('setView(2)');await frame();
+    assert.equal(await evaluate('figures[0].brainScreen'),null);
+    await evaluate('setView(0);[yaw,pitch,projectionZoom]='+JSON.stringify(camera));await frame();
+    await screenshot('seemann-brain-quiet');
     await evaluate("wardCue.value='5';wardCue.dispatchEvent(new Event('change'));");
     assert.ok(Math.abs(await evaluate('position()')-115.993691)<.002);
     await evaluate("$('addHead').click();$('addHead').click();");
     await at(120.4); await screenshot('seemann-choir');
     assert.equal(await evaluate('figures.length'),3);
+    assert.ok(await evaluate('figures[0].brainScreen && figures.slice(1).every(figure=>figure.brainLight===0 && !figure.brainScreen)'));
     await evaluate('selectSong(songs.indexOf(morrowFull))');
     assert.deepEqual((await at(165.2)).actor.hands,[1,1]);
     assert.equal(await evaluate('wardCue.options.length'),11);
     assert.equal(await evaluate('document.body.dataset.piece'),'mutter');
+    assert.ok(await evaluate('figures.every(figure=>figure.brainLight===0 && !figure.brainScreen)'));
     assert.ok(await evaluate('figures.every(figure=>figure.fracture===0)'));
     await evaluate('selectSong(songs.findIndex(song=>song!==morrowFull && song!==seemannSong))');
     assert.ok(await evaluate("wardCue.hidden && $('backingToggle').hidden && !document.body.dataset.piece"));
